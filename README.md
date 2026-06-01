@@ -1,1 +1,1 @@
-# Anima-BANK-DFINITY
+# Anima-BANK
