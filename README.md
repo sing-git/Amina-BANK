@@ -1,4 +1,4 @@
-# Anima-BANK
+# Amina-BANK
 
 ## Challenge Title
 
