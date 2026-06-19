@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Pipeline output / generated data
+pipeline/news-feed/news.json
+pipeline/news-feed/*.json
+pipeline/news-feed/candidate_articles.json
+pipeline/news-feed/articles_raw.json
+pipeline/news-feed/articles_clean.json
+
+# Environment / secrets
+.env
+.env.*
+*.local
+
+# Node (frontend/backend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
