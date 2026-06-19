@@ -9,6 +9,7 @@
 node_modules/
 dist/
 build/
+*.tsbuildinfo
 *.log
 npm-debug.log*
 pnpm-debug.log*
