@@ -520,3 +520,179 @@ interface CostLogEntry {
 }
 ```
 Aggregate these into `costPer1000Analyses()` for the judging deliverable in spec doc section 8.
+
+---
+
+## 7. Signal routing design rationale (`classifyRawSignal()`)
+
+### 7.1 Two concerns that must NOT be conflated
+
+A common wrong instinct is "use embedding similarity to figure out what kind of signal this
+is." Routing and drift-detection are two different jobs:
+
+| Concern | Question it answers | Correct mechanism |
+|---|---|---|
+| **① Routing (signal type)** | "Is this a transaction anomaly? a news item? a sanctions hit?" | the **source it came from** — NOT similarity |
+| **② Drift detection** | "How far has this client diverged from baseline?" | embedding similarity (narrative only) + numeric rules |
+
+`classifyRawSignal()` does only ①. It does **not** need embeddings: we already know the type
+because we tagged each `RawSignal` with `sourceType` when we ingested it. A record from the
+transactions DB is numeric; a record from EventRegistry is news. Routing is a `switch`, not a
+model call.
+
+### 7.2 Each signal type uses a DIFFERENT matching method (this is why we route first)
+
+Applying one method (e.g. embedding similarity) to everything is wrong — and for sanctions it
+is dangerous:
+
+| Routed type | Matching method | Why NOT embedding similarity |
+|---|---|---|
+| transaction (anomaly/structuring/dormancy) | **numeric rules** — actual vs `expected*`, % deviation | a transaction is a number; subtraction is exact, free, explainable |
+| funding | **numeric rules** — multiple of previous round | same — pure arithmetic |
+| sanctions / PEP | **exact string match only** | similarity → "Ivan Petrov" ≈ "Ivan Petroff" = false positives (block the wrong person) AND false negatives (a slight spelling slips through). Compliance demands deterministic exact match. |
+| news / registry text / website text | **embedding similarity + Stage 2 LLM** | this is the ONLY place similarity belongs — measuring how far narrative content drifted from baseline |
+
+> **Rule of thumb:** embedding similarity is for *narrative* signals only. Numbers use rules.
+> Identities (sanctions) use exact match. That is precisely *why* we route by type first.
+
+### 7.3 What "baseline" / "profile" means
+
+The reference everything is compared against is the **onboarding KYC profile** (`ClientBaseline`)
+— concrete *expected behaviour*, not abstract "trust"/"wealth" scores:
+
+- `expectedMonthlyVolumeUSD`, `expectedMonthlyTxCount` — how much / how often money should move
+- `expectedCounterpartyRegions` — who they should transact with
+- `declaredBusinessDescription` — the embedding anchor for narrative drift
+- `riskRating` — set at onboarding via the 4-factor rubric
+- `ubos` — beneficial owners, screened against sanctions/PEP
+
+Drift = real-world activity diverging from these declared expectations.
+
+### 7.4 Where similarity actually applies (narrative branch)
+
+For narrative signals the "keyword" is **not** an arbitrary word list — it is the baseline text:
+
+```
+similarity( declaredBusinessDescription , incoming_text )  = baselineSim
+   low baselineSim  → large drift → worth reviewing
+   high baselineSim → no change   → discard (no LLM cost)
+
+similarity( incoming_text , each RISK_ARCHETYPE )          = archetypeSims
+   high archetype match → resembles a known risk pattern
+```
+
+Entity matching ("is this news even about my client?") is handled separately by *querying the
+news source with the client's name* (`newsQuery`), not by similarity.
+
+---
+
+## 8. Source → Signal map (which public source to look at for which signal)
+
+Layer 1 ingestion: each connector pulls from a specific source, produces a `RawSignal` with the
+right `sourceType`/`category`, and `classifyRawSignal()` routes it to the right method.
+
+| # | Signal (README use case) | `category` | Where to look (source) | `sourceType` | Method |
+|---|---|---|---|---|---|
+| 1 | Spike in negative news | `negative_news` | EventRegistry (wired) · Google News RSS · GDELT · NewsAPI | `news` | embedding + Stage 2 |
+| 2 | High-value cross-border transfers | `cross_border_anomaly` | **internal** transaction history | `transaction` | numeric rule |
+| 3 | Linked entities, sudden large flows | `structuring_pattern` | **internal** transaction history | `transaction` | numeric rule |
+| 4 | Legal entity name change | `entity_name_change` | GLEIF LEI · UK Companies House · OpenCorporates · Swiss ZEFIX | `registry` | embedding + Stage 2 |
+| 5 | Domain / website content change | `domain_change` | WHOIS ICANN · SecurityTrails · Wayback Machine · Firecrawl | `domain` | embedding + Stage 2 |
+| 6 | Public business-model pivot | `business_model_pivot` | news + website (Wayback/Firecrawl) + funding news | `news`/`domain` | embedding + Stage 2 |
+| 7 | Jurisdiction / legal-form change | `jurisdiction_change` | GLEIF · Companies House · ZEFIX · OpenCorporates | `registry` | embedding + Stage 2 |
+| 8 | New shareholders / beneficial owners | `ownership_change` | Companies House PSC · GLEIF · OpenCorporates · ICIJ Offshore Leaks | `registry` | embedding + Stage 2, then re-screen UBOs (exact) |
+| 9 | Large funding round / expansion | `funding_scale_change` | Crunchbase · funding news · Wellfound/PitchBook/Tracxn | `funding_db` | numeric rule |
+| 10 | Dormant company suddenly active | `dormancy_break` | **internal** transaction history | `transaction` | numeric rule |
+| — | Sanctions / PEP match (hard gate) | n/a (gate) | **OpenSanctions** (recommended) · OFAC SDN · EU FSF · UN | `registry`/gate | **exact match only** |
+
+**Reading the table:**
+- **Internal** sources (rows 2, 3, 10) = Layer 2 synthetic transaction data → numeric rules, no LLM.
+- **Public text** sources (rows 1, 4–8) = news/registry/website → embedding gate then Stage 2 LLM.
+- **Public numeric** sources (row 9) = funding amounts → numeric rules.
+- **Sanctions** = its own hard gate, exact match, short-circuits everything to CRITICAL.
+
+> For the demo only the **news** source (EventRegistry) is wired live; the rest are
+> "architecturally supported, not wired up" — state this explicitly rather than implying full
+> coverage. OpenSanctions is the next planned connector.
+
+---
+
+## 9. Fraud / AML typology formulas (`ruleDiff.ts`)
+
+"Fraud warnings" = AML typologies detected by deterministic arithmetic on the synthetic
+transaction history. No LLM. Every flag is reproducible by hand — which is exactly what an
+auditor needs. All thresholds are compliance-owned tunables.
+
+```
+Tunables: WINDOW = 30d · CTR_THRESHOLD = $10,000 · STRUCTURING_BAND_LO = 0.8
+          STRUCTURING_MIN_COUNT = 3 · VOLUME_SURGE_RATIO = 0.5 · PASSTHROUGH_RATIO = 0.8
+          DORMANCY_DAYS = 180
+```
+
+### 9.1 Structuring / smurfing → `structuring_pattern`
+Many transfers deliberately just under the reporting threshold.
+```
+band = { tx ∈ window : 0.8×CTR_THRESHOLD ≤ amount < CTR_THRESHOLD }   # i.e. $8,000–$9,999
+flag IF |band| ≥ STRUCTURING_MIN_COUNT
+magnitude = clamp(|band| × 20)            # 3 → 60, 5 → 100
+confidence = 0.85
+```
+
+### 9.2 Cross-border anomaly / money mule → `cross_border_anomaly`
+Volume surge where inbound funds pass straight out to unexpected jurisdictions.
+```
+inVol, outVol = Σ inbound, Σ outbound   (within window)
+deviation     = (inVol + outVol − expectedMonthlyVolumeUSD) / expectedMonthlyVolumeUSD
+passThrough   = inVol > 0 ? outVol / inVol : 1
+crossOut      = outbound txs to region ∉ expectedCounterpartyRegions
+crossShare    = Σ crossOut.amount / max(outVol, 1)
+
+flag IF crossOut ≠ ∅ AND (deviation > VOLUME_SURGE_RATIO OR passThrough ≥ PASSTHROUGH_RATIO)
+magnitude = clamp( min(deviation,2)×30 + crossShare×40 + (passThrough ≥ 0.8 ? 30 : 0) )
+confidence = 0.9
+```
+*Worked example (NordPay):* inVol+outVol = $3.3M vs expected $300k → deviation = 10.0;
+all outbound to Seychelles/Cayman → crossShare = 1.0; passThrough = 1.0 →
+magnitude = clamp(2×30 + 1×40 + 30) = clamp(130) = **100**.
+
+### 9.3 Dormancy break → `dormancy_break`
+Long inactivity followed by a sudden surge (account takeover / suspicious activation).
+```
+maxGap = max gap in days between consecutive txs
+burst  = Σ amounts in the 30 days AFTER that gap
+flag IF maxGap ≥ DORMANCY_DAYS AND burst > 0
+magnitude = clamp(40 + maxGap / 10)       # 180d → 58, 208d → 61
+confidence = 0.85
+```
+
+### 9.4 Funding scale → `funding_scale_change` (not fraud — context)
+```
+multiple  = previous>0 ? current/previous : current/1e6
+magnitude = clamp(log10(max(multiple,1.01)) × 50)
+direction = neutral_update    # Stage 2 may re-judge as positive / risk_increasing
+```
+
+> `runTransactionChecks()` runs 9.1–9.3 and returns **all** that fire — they are distinct
+> patterns, so a client can be flagged for several at once (NordPay = mule + dormancy).
+
+---
+
+## 10. Challenge output coverage (self-check vs README "Case Introduction")
+
+The brief asks for five outputs. Mapping to what the system produces:
+
+| Required output | Status | Produced by |
+|---|---|---|
+| **early risk alerts** | ✅ | KYC-drift detection → alert queue; flags divergence before it matures |
+| **fraud warnings** | ✅ | `ruleDiff.ts` AML typologies (§9), tagged `isFraudTypology` + `[FRAUD/AML]` badge |
+| **risk scoring** | ✅ | `computeCompositeScore` → `compositeScore` 0–100 + `riskFlag` (confidence-weighted) |
+| **compliance insights** | ✅ | per-signal `rationale` + `sourceCitations` + Stage 3 `fullReasoningChain` + audit log |
+| **actionable recommendations** | ✅ | per-signal `suggestedAction` (from README's "Recommended Action" column / LLM) + Stage 3 `recommendedAction` |
+
+**Definitions used:**
+- *Compliance insight* = the explained reasoning (why it's risky, with citations and the
+  governing factor), not just a number.
+- *Actionable recommendation* = a concrete next step the system **suggests** and a human
+  **decides** (file SAR / request enhanced KYC / trigger re-KYC / escalate / no action).
+- *Fraud warning* = an AML typology (money mule, structuring, dormancy break) caught by the
+  numeric rules, distinct from generic profile drift.
