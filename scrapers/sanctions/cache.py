@@ -13,7 +13,7 @@ import hashlib
 import pickle
 from pathlib import Path
 
-from sanctions.models import SanctionRecord
+from scrapers.sanctions.sanctions.models import SanctionRecord
 
 CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 

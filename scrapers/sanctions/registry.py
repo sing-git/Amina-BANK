@@ -8,10 +8,11 @@ import sys
 import time
 from pathlib import Path
 
-from sanctions import download
-from sanctions.cache import load_or_build
-from sanctions.models import SanctionRecord
-from sanctions.sources import ofac, opensanctions, un
+from scrapers.sanctions.sanctions import download
+from scrapers.sanctions.sanctions.cache import load_or_build
+from scrapers.sanctions.sanctions.models import SanctionRecord
+from scrapers.sanctions.sanctions.sources import un
+from scrapers.sanctions.sanctions.sources import ofac, opensanctions
 
 MAX_SOURCE_AGE_DAYS = 7
 

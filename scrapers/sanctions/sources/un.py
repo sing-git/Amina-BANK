@@ -14,7 +14,7 @@ from collections.abc import Iterator
 
 from lxml import etree
 
-from sanctions.models import SanctionRecord
+from scrapers.sanctions.sanctions.models import SanctionRecord
 
 SOURCE = "UN"
 LIST_NAME = "UN Security Council Consolidated List"

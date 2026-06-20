@@ -19,8 +19,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from sanctions.matcher import screen
-from sanctions.registry import load_all_records
+from scrapers.sanctions.sanctions.matcher import screen
+from scrapers.sanctions.sanctions.registry import load_all_records
 
 
 def main() -> int:

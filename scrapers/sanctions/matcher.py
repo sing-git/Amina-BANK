@@ -12,7 +12,7 @@ from collections.abc import Iterable
 from rapidfuzz import fuzz
 from rapidfuzz.distance import Levenshtein
 
-from sanctions.models import Match, SanctionRecord
+from scrapers.sanctions.sanctions.models import Match, SanctionRecord
 
 # Common legal-form suffixes, stripped before comparison so "Acme Ltd" and
 # "Acme Limited" score as equivalent rather than being penalized for the

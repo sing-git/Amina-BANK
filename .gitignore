@@ -27,3 +27,4 @@ data/
 
 # generated synthetic data (regenerated from generators; optional to keep)
 backend/data/generated/*.json
+__pycache__/
