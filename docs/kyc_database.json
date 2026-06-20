@@ -10,7 +10,15 @@
     "kyc_baseline": {
       "expected_business_model": "Design and manufacturing of commercial airplanes and aerospace systems",
       "expected_activity_and_volumes": "International SWIFT transfers linked to government contracts and airlines, > 5 billion USD per month",
-      "risk_rating": "Medium"
+      "risk_rating": "Medium",
+      "domain_registrar": "MarkMonitor, Inc.",
+      "domain_nameservers": [
+        "cltdnsxp01.dns.boeing.net",
+        "cltdnsxp02.dns.boeing.net",
+        "phxdnsxp01.dns.boeing.net",
+        "qnydnsxp01.dns.boeing.net"
+      ],
+      "domain_registrant_org": "The Boeing Company"
     },
     "key_personnel": {
       "CEO": "David Calhoun",
@@ -46,7 +54,15 @@
     "kyc_baseline": {
       "expected_business_model": "Mobile e-wallet application and prepaid travel payment card",
       "expected_activity_and_volumes": "Low-value B2C credit card top-ups, approximately 5 million USD per month",
-      "risk_rating": "Low"
+      "risk_rating": "Low",
+      "domain_registrar": "Squarespace Domains II LLC",
+      "domain_nameservers": [
+        "ns-cloud-d1.googledomains.com",
+        "ns-cloud-d2.googledomains.com",
+        "ns-cloud-d3.googledomains.com",
+        "ns-cloud-d4.googledomains.com"
+      ],
+      "domain_registrant_org": "Revolut LTD"
     },
     "key_personnel": {
       "CEO": "Nikolay Storonsky",
@@ -64,7 +80,15 @@
     "kyc_baseline": {
       "expected_business_model": "Research, development, and manufacturing of global biopharmaceutical products",
       "expected_activity_and_volumes": "Massive B2B transactions (hospitals, governments), > 4 billion USD per month",
-      "risk_rating": "Low"
+      "risk_rating": "Low",
+      "domain_registrar": "NOM-IQ Ltd dba Com Laude",
+      "domain_nameservers": [
+        "ns1.p201.dns.oraclecloud.net",
+        "ns2.p201.dns.oraclecloud.net",
+        "ns3.p201.dns.oraclecloud.net",
+        "ns4.p201.dns.oraclecloud.net"
+      ],
+      "domain_registrant_org": "Pfizer Inc."
     },
     "key_personnel": {
       "CEO": "Albert Bourla",
@@ -78,7 +102,22 @@
     "kyc_baseline": {
       "expected_business_model": "Swiss global investment banking and financial services; wealth management, investment banking, asset management",
       "expected_activity_and_volumes": "Interbank SWIFT transfers, institutional settlement flows, > 20 billion USD per month",
-      "risk_rating": "Low"
+      "risk_rating": "Low",
+      "domain_redirect_destination": "ubs.com",
+      "domain_registrar": "MarkMonitor, Inc.",
+      "domain_nameservers": [
+        "a1-12.akam.net",
+        "a2-65.akam.net",
+        "a26-66.akam.net",
+        "a28-65.akam.net",
+        "a3-64.akam.net",
+        "a5-65.akam.net",
+        "jupiter.ubs.com",
+        "mercury.ubs.com",
+        "neptune.ubs.com",
+        "uranus.ubs.com"
+      ],
+      "domain_registrant_org": "UBS Group AG"
     },
     "key_personnel": {
       "CEO": "Ulrich Koerner",
@@ -93,7 +132,13 @@
     "kyc_baseline": {
       "expected_business_model": "Mobile gaming application developer and digital entertainment company; primary revenues from in-app purchases and licensing",
       "expected_activity_and_volumes": "B2C and B2B payments for mobile game licensing and digital content, approximately 8 million USD per month",
-      "risk_rating": "Low"
+      "risk_rating": "Low",
+      "domain_registrar": "GoDaddy.com, LLC",
+      "domain_nameservers": [
+        "ns23.domaincontrol.com",
+        "ns24.domaincontrol.com"
+      ],
+      "domain_registrant_org": "Domains By Proxy, LLC"
     },
     "key_personnel": {
       "CEO": "Robby Yung",
@@ -108,7 +153,14 @@
     "kyc_baseline": {
       "expected_business_model": "Cryptocurrency derivatives exchange platform; B2B and retail trading services for crypto perpetual contracts",
       "expected_activity_and_volumes": "Crypto-to-fiat settlement and OTC desk transfers, approximately 50 million USD per month",
-      "risk_rating": "Medium"
+      "risk_rating": "Medium",
+      "domain_registrar": "CSC Corporate Domains, Inc.",
+      "domain_nameservers": [
+        "ns-1516.awsdns-61.org",
+        "ns-1675.awsdns-17.co.uk",
+        "ns-407.awsdns-50.com",
+        "ns-815.awsdns-37.net"
+      ]
     },
     "key_personnel": {
       "CEO": "Ben Zhou",
@@ -123,13 +175,19 @@
     "kyc_baseline": {
       "expected_business_model": "Licensed cryptocurrency spot exchange; retail trading and custody services for digital assets in Hong Kong",
       "expected_activity_and_volumes": "Retail crypto on/off-ramp fiat flows, approximately 15 million USD per month",
-      "risk_rating": "Medium"
+      "risk_rating": "Medium",
+      "domain_registrar": "GoDaddy.com, LLC",
+      "domain_nameservers": [
+        "ns73.domaincontrol.com",
+        "ns74.domaincontrol.com"
+      ],
+      "domain_registrant_org": "Domains By Proxy, LLC"
     },
     "key_personnel": {
-      "CEO": "Unknown — management undisclosed at onboarding",
+      "CEO": "Unknown \u2014 management undisclosed at onboarding",
       "Compliance Officer": "Disclosed as local Hong Kong representative"
     },
-    "notes": "Claimed licensing status verified at onboarding via HKSFC registry — license subsequently found to be fabricated. Onboarded with Medium risk rating based on stated regulatory compliance. Key management identities not fully verified — flagged as documentation gap at onboarding."
+    "notes": "Claimed licensing status verified at onboarding via HKSFC registry \u2014 license subsequently found to be fabricated. Onboarded with Medium risk rating based on stated regulatory compliance. Key management identities not fully verified \u2014 flagged as documentation gap at onboarding."
   },
   {
     "company_id": "CUST-009",
@@ -138,7 +196,15 @@
     "kyc_baseline": {
       "expected_business_model": "Digital advertising technology, cloud computing services, and consumer software products",
       "expected_activity_and_volumes": "Large-volume B2B advertising revenue settlements and vendor payments, > 10 billion USD per month",
-      "risk_rating": "Low"
+      "risk_rating": "Low",
+      "domain_registrar": "MarkMonitor, Inc.",
+      "domain_nameservers": [
+        "ns1.google.com",
+        "ns2.google.com",
+        "ns3.google.com",
+        "ns4.google.com"
+      ],
+      "domain_registrant_org": "Google LLC"
     },
     "key_personnel": {
       "CEO": "Sundar Pichai",
@@ -153,7 +219,15 @@
     "kyc_baseline": {
       "expected_business_model": "E-commerce marketplace operator, cloud infrastructure services (AWS), and digital media distribution",
       "expected_activity_and_volumes": "High-volume B2B and B2C payment flows including third-party seller disbursements and AWS enterprise billing, > 15 billion USD per month",
-      "risk_rating": "Low"
+      "risk_rating": "Low",
+      "domain_registrar": "MarkMonitor, Inc.",
+      "domain_nameservers": [
+        "ns-1447.awsdns-52.org",
+        "ns-1707.awsdns-21.co.uk",
+        "ns-264.awsdns-33.com",
+        "ns-521.awsdns-01.net"
+      ],
+      "domain_registrant_org": "Amazon Technologies, Inc."
     },
     "key_personnel": {
       "CEO": "Andy Jassy",

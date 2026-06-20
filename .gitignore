@@ -43,3 +43,4 @@ data/
 .cache/
 # Generated output from sanctions/kyc_check.py (regenerate by re-running it)
 sanctions/kyc_sanctions_flags.json
+swisshacks/
