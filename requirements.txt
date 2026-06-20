@@ -9,3 +9,9 @@ gliner
 # Sanctions screening (sanctionlist.py)
 lxml>=5.3.0
 rapidfuzz>=3.14.5
+
+# Corporate registry comparison (scrapers/corporate/comparedata.py)
+python-dotenv
+
+# Testing
+pytest>=8.4.0

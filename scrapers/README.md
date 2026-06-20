@@ -50,3 +50,5 @@ directly, or — preferred — read from Postgres after the scrapers write there
 ```
 scraper (Python) → JSON / Postgres → adapter (TS) → RawSignal[] → runPipeline()
 ```
+## Code testing
+23% of functions in the codebase have a direct test (30 out of 130 functions)
