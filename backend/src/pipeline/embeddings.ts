@@ -4,6 +4,7 @@
 // Option A (upgrade): voyageEmbed — real semantic vectors, needs VOYAGE_API_KEY
 //                     (backend-only; never exposed to the browser).
 // See runbook D4.
+import { POLICY } from "./policy.js";
 
 const EMBED_DIM = 256;
 
@@ -99,17 +100,8 @@ export async function scoreNarrativeSignal(
   return { baselineSimilarity, archetypeMatches };
 }
 
-// Fixed risk archetypes (embed once at app start — see runbook D4).
-export const RISK_ARCHETYPES: Record<string, string> = {
-  high_leverage_crypto:
-    "High-leverage crypto derivatives trading platform offering up to 100x leverage",
-  shell_company:
-    "Inactive entity with no verifiable business operations or physical presence",
-  sanctioned_jurisdiction_move:
-    "Relocation of legal domicile or operations to a jurisdiction under international sanctions",
-  unexplained_volume_surge:
-    "Sudden, unexplained surge in transaction volume inconsistent with stated business activity",
-};
+// Fixed risk archetypes come from the compliance-owned policy (config/riskPolicy.json).
+export const RISK_ARCHETYPES: Record<string, string> = POLICY.riskArchetypes;
 
 /** Build the cached archetype vectors once at startup. */
 export async function buildArchetypeEmbeddings(): Promise<Record<string, number[]>> {

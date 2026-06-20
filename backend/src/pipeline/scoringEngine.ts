@@ -2,32 +2,16 @@
 // See spec sections 3.5 and 6.5. Weights are loaded from a compliance-owned
 // JSON config (the AI executes policy, it does not set policy).
 
-import { createRequire } from "node:module";
-import type {
-  CompositeScoreResult,
-  SignalScore,
-  SignalWeightsConfig,
-} from "../types.js";
+import type { CompositeScoreResult, SignalScore } from "../types.js";
 import type { HardGateResult } from "./hardGate.js";
+import { flagForScore, MAX_WEIGHT, POLICY } from "./policy.js";
 
-const require = createRequire(import.meta.url);
-const weightsConfig = require("../config/signalWeights.json") as SignalWeightsConfig;
-
-export const SIGNAL_WEIGHTS = weightsConfig.weights;
-export const WEIGHTS_VERSION = weightsConfig.version;
-
-// Weights are RELATIVE importance (they sum to 100 across 10 categories, so the
-// most-important factor is 20). We scale each signal's severity by its weight
-// relative to that maximum, so a single high-importance, high-magnitude,
-// high-confidence signal can on its own push a client into HIGH — matching
-// README's reference table (e.g. structuring / business-model pivot = high).
-const MAX_WEIGHT = Math.max(...Object.values(SIGNAL_WEIGHTS));
-
-function riskFlagFor(score: number): "low" | "medium" | "high" {
-  if (score < 30) return "low";
-  if (score <= 60) return "medium";
-  return "high";
-}
+// All tunables come from the compliance-owned policy (config/riskPolicy.json).
+// Weights are RELATIVE importance; we scale each signal's severity by weight/maxWeight,
+// so a single high-importance, high-magnitude, high-confidence signal can push a client
+// into HIGH — matching README's reference table.
+export const SIGNAL_WEIGHTS = POLICY.signalWeights;
+export const WEIGHTS_VERSION = POLICY.version;
 
 export function computeCompositeScore(
   scores: SignalScore[],
@@ -56,7 +40,8 @@ export function computeCompositeScore(
     0,
   );
   const softening = positiveSignals.reduce(
-    (acc, s) => acc + (s.magnitude * ((SIGNAL_WEIGHTS[s.category] ?? 0) / MAX_WEIGHT) * s.confidence * 0.3),
+    (acc, s) =>
+      acc + s.magnitude * ((SIGNAL_WEIGHTS[s.category] ?? 0) / MAX_WEIGHT) * s.confidence * POLICY.softeningFactor,
     0,
   );
 
@@ -65,7 +50,7 @@ export function computeCompositeScore(
   return {
     clientId,
     compositeScore: Math.round(compositeScore),
-    riskFlag: riskFlagFor(compositeScore),
+    riskFlag: flagForScore(compositeScore),
     contributingSignals: riskSignals,
     neutralSignals, // these trigger the threshold-refresh workflow, not the score
     hardGateTriggered: false,

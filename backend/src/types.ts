@@ -21,6 +21,8 @@ export interface ClientBaseline {
 
 export type SyntheticModel = "claude" | "gemini" | "openai" | "azure" | "manual";
 
+export type RiskFlag = "low" | "medium" | "high" | "critical";
+
 export interface TransactionRecord {
   txId: string;
   clientId: string;
@@ -54,6 +56,7 @@ export interface RawSignal {
   sourceType: "news" | "registry" | "domain" | "transaction" | "funding_db";
   sourceUrl?: string;
   rawText?: string; // for narrative signals
+  newsQuery?: string; // for LIVE news: a company name/query to fetch real articles via the news MCP
   rawNumeric?: number; // for numeric signals
   rawNumericContext?: Record<string, number>; // e.g. { previousValue: 0, currentValue: 50 }
 }
@@ -67,8 +70,10 @@ export interface SignalScore {
   magnitude: number; // 0–100, "how big is the change"
   direction: "risk_increasing" | "neutral_update" | "positive" | "unknown";
   rationale: string; // human-readable, plain language
+  suggestedAction: string; // concrete next step a compliance officer can take
   sourceCitations: string[]; // URLs or source IDs referenced
   confidence: number; // 0–1
+  isFraudTypology?: boolean; // true for AML/fraud patterns (money mule, structuring, dormancy)
 }
 
 export interface CompositeScoreResult {

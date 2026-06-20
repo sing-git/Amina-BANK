@@ -10,46 +10,49 @@ export interface Evidence {
 
 export async function fetchEvidenceViaMCP(signal: RawSignal): Promise<Evidence[]> {
   const key = process.env.EVENTREGISTRY_API_KEY;
+  // The keyword we search news for: an explicit newsQuery (live company demo) or the rawText.
+  const keyword = (signal.newsQuery ?? signal.rawText ?? "").trim();
+
+  const fallback = (): Evidence[] =>
+    signal.rawText
+      ? [{ sourceUrl: signal.sourceUrl ?? `signal:${signal.signalId}`, text: signal.rawText }]
+      : [];
 
   // No key, or non-news signal → use whatever the signal already carries.
-  if (!key || signal.sourceType !== "news") {
-    if (signal.rawText) {
-      return [{ sourceUrl: signal.sourceUrl ?? `signal:${signal.signalId}`, text: signal.rawText }];
-    }
-    return [];
+  if (!key || signal.sourceType !== "news" || !keyword) {
+    return fallback();
   }
 
-  // Live EventRegistry query, keyed off the signal text.
+  // Live EventRegistry (newsapi.ai) query, keyed off the company name / signal text.
   try {
     const res = await fetch("https://eventregistry.org/api/v1/article/getArticles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        apiKey: key,
-        keyword: signal.rawText?.slice(0, 120) ?? "",
+        action: "getArticles",
+        keyword,
+        keywordOper: "and",
+        lang: "eng",
+        articlesPage: 1,
         articlesCount: 5,
+        articlesSortBy: "date",
         resultType: "articles",
-        articlesSortBy: "rel",
         dataType: ["news"],
+        apiKey: key,
       }),
     });
-    if (!res.ok) throw new Error(`EventRegistry ${res.status}`);
+    if (!res.ok) throw new Error(`EventRegistry ${res.status}: ${await res.text()}`);
     const data = (await res.json()) as {
-      articles?: { results?: Array<{ url: string; title: string; body?: string }> };
+      articles?: { results?: Array<{ url: string; title: string; body?: string; date?: string }> };
     };
     const results = data.articles?.results ?? [];
-    if (results.length === 0 && signal.rawText) {
-      return [{ sourceUrl: signal.sourceUrl ?? `signal:${signal.signalId}`, text: signal.rawText }];
-    }
+    if (results.length === 0) return fallback();
     return results.map((a) => ({
       sourceUrl: a.url,
-      text: `${a.title}. ${(a.body ?? "").slice(0, 400)}`,
+      text: `${a.date ? `(${a.date}) ` : ""}${a.title}. ${(a.body ?? "").slice(0, 500)}`,
     }));
-  } catch {
-    // graceful fallback — never let evidence retrieval crash the pipeline
-    if (signal.rawText) {
-      return [{ sourceUrl: signal.sourceUrl ?? `signal:${signal.signalId}`, text: signal.rawText }];
-    }
-    return [];
+  } catch (e) {
+    console.warn(`[mcpNews] live fetch failed (${(e as Error).message}); using fallback text.`);
+    return fallback();
   }
 }

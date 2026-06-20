@@ -39,6 +39,7 @@ Return ONLY this JSON shape, no markdown fences, no commentary:
   "direction": "risk_increasing" | "neutral_update" | "positive",
   "magnitude": <0-100 integer>,
   "rationale": "<one or two plain-language sentences a compliance officer can read directly>",
+  "suggested_action": "<one concrete next step, e.g. 'Trigger KYC refresh; re-screen UBOs against sanctions/PEP'>",
   "source_citations": ["<url or source id from retrievedEvidence only>"],
   "confidence": <0-1 float>
 }`;

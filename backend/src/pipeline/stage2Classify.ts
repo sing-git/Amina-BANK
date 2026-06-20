@@ -3,6 +3,7 @@
 import type { ClientBaseline, RawSignal, SignalScore } from "../types.js";
 import { callClaude, extractJSON } from "./llm.js";
 import { buildStage2User, STAGE2_SYSTEM } from "../prompts/stage2.js";
+import { isFraudTypology, recommendedAction } from "./recommendations.js";
 import type { Evidence } from "./mcpNews.js";
 
 const MODEL = "claude-haiku-4-5-20251001";
@@ -11,6 +12,7 @@ interface Stage2JSON {
   direction: "risk_increasing" | "neutral_update" | "positive";
   magnitude: number;
   rationale: string;
+  suggested_action?: string;
   source_citations: string[];
   confidence: number;
 }
@@ -44,10 +46,12 @@ export async function classifySignal(
     magnitude: Math.max(0, Math.min(100, Math.round(parsed.magnitude))),
     direction: parsed.direction,
     rationale: parsed.rationale,
+    suggestedAction: parsed.suggested_action?.trim() || recommendedAction(signal.category),
     sourceCitations: parsed.source_citations?.length
       ? parsed.source_citations
       : retrievedEvidence.map((e) => e.sourceUrl),
     confidence: Math.max(0, Math.min(1, parsed.confidence)),
+    isFraudTypology: isFraudTypology(signal.category),
   };
 }
 

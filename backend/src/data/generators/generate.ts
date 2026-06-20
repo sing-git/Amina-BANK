@@ -33,6 +33,7 @@ async function main() {
 
   const clients: ClientBaseline[] = [];
   const transactions: TransactionRecord[] = [];
+  const labelByClientId: Record<string, string> = {}; // clientId → injected scenario (ground truth)
 
   for (const seed of SEEDS) {
     for (const provider of active) {
@@ -48,6 +49,7 @@ async function main() {
           generatedBy: provider.id as SyntheticModel,
         };
         clients.push(baseline);
+        labelByClientId[clientId] = seed.scenario; // record the ground-truth label
 
         parsed.transactions.forEach((t, i) => {
           transactions.push({
@@ -71,6 +73,9 @@ async function main() {
     generatedAt: new Date().toISOString(),
     models: active.map((p) => p.id),
     clientCount: clients.length,
+    // groundTruth: which scenario was injected per client → the label to evaluate against.
+    // (CLT id ends in the model name; the SEEDS array order maps clients to scenarios.)
+    groundTruth: clients.map((c) => ({ clientId: c.clientId, scenario: labelByClientId[c.clientId] ?? "unknown" })),
     clients,
     transactions,
   };
