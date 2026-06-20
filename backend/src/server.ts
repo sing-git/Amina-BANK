@@ -149,6 +149,19 @@ app.get("/api/drift-signals", (_req, res) => {
   }
 });
 
+// KYC database (docs/kyc_database.json) — the onboarding baselines for each client.
+// Served verbatim for the Onboarding view.
+app.get("/api/kyc-database", (_req, res) => {
+  try {
+    const path = new URL("../../docs/kyc_database.json", import.meta.url);
+    if (!existsSync(path)) return res.json({ companies: [] });
+    const companies = JSON.parse(readFileSync(path, "utf8"));
+    res.json({ companies: Array.isArray(companies) ? companies : [] });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
 // Sanctions screening flags (scrapers/sanctions/kyc_sanctions_flags.json) for the Clusters
 // contagion overlay. Served verbatim — the frontend matches flagged names against graph leaves.
 app.get("/api/sanctions-flags", (_req, res) => {
