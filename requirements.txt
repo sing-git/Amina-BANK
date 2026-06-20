@@ -5,3 +5,7 @@ trafilatura
 # Company NER (entity_extractor.py). Pulls in torch + transformers + huggingface_hub.
 # First run downloads the model (~hundreds of MB) to ~/.cache/huggingface (outside the repo).
 gliner
+
+# Sanctions screening (sanctionlist.py)
+lxml>=5.3.0
+rapidfuzz>=3.14.5
