@@ -3,6 +3,8 @@
     "company_id": "CUST-001",
     "legal_name": "The Boeing Company",
     "domain": "boeing.com",
+    "legal_form": "General Corporation (Publicly Traded)",
+    "ownership": "Widely held public company (Institutional investors: Vanguard, BlackRock, etc.)",
     "kyc_baseline": {
       "expected_business_model": "Design and manufacturing of commercial airplanes and aerospace systems",
       "expected_activity_and_volumes": "International SWIFT transfers linked to government contracts and airlines, > 5 billion USD per month",
@@ -17,6 +19,8 @@
     "company_id": "CUST-002",
     "legal_name": "Terraform Labs",
     "domain": "terra.money",
+    "legal_form": "Private Limited Company (Pte. Ltd.)",
+    "ownership": "Privately held (Major shareholders: Do Kwon, Daniel Shin)",
     "kyc_baseline": {
       "expected_business_model": "Development of blockchain software and decentralized finance (DeFi) protocols",
       "expected_activity_and_volumes": "B2B payments and crypto transfers, approximately 10 million USD per month",
@@ -31,6 +35,8 @@
     "company_id": "CUST-003",
     "legal_name": "Revolut Ltd",
     "domain": "revolut.com",
+    "legal_form": "Private Limited Company (Ltd)",
+    "ownership": "Wholly owned by Revolut Group Holdings Ltd (Backed by Nikolay Storonsky, SoftBank, Tiger Global)",
     "kyc_baseline": {
       "expected_business_model": "Mobile e-wallet application and prepaid travel payment card",
       "expected_activity_and_volumes": "Low-value B2C credit card top-ups, approximately 5 million USD per month",
@@ -45,6 +51,8 @@
     "company_id": "CUST-004",
     "legal_name": "Pfizer Inc.",
     "domain": "pfizer.com",
+    "legal_form": "General Corporation (Publicly Traded)",
+    "ownership": "Widely held public company (Institutional investors: Vanguard, State Street, BlackRock)",
     "kyc_baseline": {
       "expected_business_model": "Research, development, and manufacturing of global biopharmaceutical products",
       "expected_activity_and_volumes": "Massive B2B transactions (hospitals, governments), > 4 billion USD per month",
