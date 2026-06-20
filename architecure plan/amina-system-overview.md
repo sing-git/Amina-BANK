@@ -104,10 +104,31 @@ npm run demo:live -- "Wirecard AG"                # 실제 뉴스 1건
 
 ---
 
-## 남은 통합 작업
+## 진행 상황 (Progress) — 2026-06-20
 
-- [ ] Giulio `signal_extractor.py` 실행 → `kyc_drift_signals.json` 생성 (그래야 portfolio에 점수 뜸)
-- [ ] Kiara `matcher.py` 출력 → `hardGate` 어댑터 연결 (지금 데모 stub)
-- [ ] 스크래퍼 → Postgres 저장 (24h 스케줄러)
-- [ ] (로드맵) 시그널별 HITL 버튼, Jury 모델, PDF/CSV
-```
+### ✅ 완료
+- 전체 파이프라인 (하드게이트 → 라우팅 → 룰/임베딩/Stage2 → 스코어링 → Stage3)
+- 정책 파일 `riskPolicy.json` (모든 튜닝값 1곳 → 다른 회사 = 파일만 교체)
+- fraud 전형 3종 공식 (structuring/mule/dormancy) + 정확도 평가 `npm run eval` (5/5)
+- 저신뢰 시그널 컷, per-signal `suggestedAction`, fraud 배지
+- 라이브 뉴스 (`demo:live`), 멀티모델 합성 생성기 + ground-truth 라벨
+- Postgres 레이어 (`db.ts`, `schema.sql`, `db:init`)
+- **팀 통합**: 어댑터(news/kyc/sanctions) → `/api/portfolio/alerts` → 대시보드 토글
+- **Kiara sanctions → 하드게이트** 연결 (브릿지 `screen_portfolio.py`)
+- **시그널별 HITL 버튼** (✓검증 / ✗기각, 개별 신호마다 + 감사로그)
+
+### 🔜 내가(팀이) 더 할 것
+- [ ] Giulio `signal_extractor.py` 실행 → `kyc_drift_signals.json` (그래야 portfolio에 점수 뜸)
+- [ ] Kiara `screen_portfolio.py` 실행 → `data/sanctions_hits.json` (실제 OFAC/UN hit)
+- [ ] 스크래퍼 → Postgres 저장 + 24h 스케줄러 (`node-cron`)
+- [ ] 발표: 3분 데모 대본 + cost 표 + 예상 질문
+- [ ] integration → main 머지 (또는 integration에서 발표) — 폴더 이동 충돌만 해결
+
+### 💡 발전시키면 좋을 것 (Future)
+- **drift 차원 확장** (지금 우리 10개): `domain_change`(Wayback/Firecrawl), `entity_name_change`(GLEIF/ZEFIX), `pep_exposure`(OpenSanctions PEP), `nominee_ownership`(ICIJ Offshore Leaks), `negative_sentiment`(뉴스 감성). 소스 = FATF 적색신호 + README 10개 표.
+- **제재 정확성 (동명이인 문제)**: 이름만 매칭하면 다른 회사 오탐. **2차 식별자(관할/LEI/주소/entity_type)로 대조** → 불일치 시 자동 차단 대신 사람 검토 큐.
+- **fuzzy + 사람 검토 큐 (2단계)**: `≥98 + 식별자 일치 → 자동 CRITICAL`, `85~98 → 검토 큐`. 임계값을 `riskPolicy.json`에 정책화.
+- **Jury 모델 (#5)**: 2개 모델이 "위험 vs 정상" 논쟁 → 판정관이 점수로 결정 (고위험 후보에만). 평가자 차별화 포인트.
+- **PDF/CSV 다운로드 (#4)**: 케이스 보고서 내보내기.
+- **contagion(전염) 활성화**: Giulio의 `linked_entities`로 연관사 위험 전파 (A↔B 관계 그래프).
+- **실측 라벨로 weight 회귀학습**: 합성 → 실데이터 결과가 쌓이면 가중치 재학습 (로드맵).

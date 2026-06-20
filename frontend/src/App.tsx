@@ -13,6 +13,7 @@ export function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [decided, setDecided] = useState<Record<string, string>>({});
+  const [signalDecisions, setSignalDecisions] = useState<Record<string, string>>({});
   const [view, setView] = useState<"queue" | "audit">("queue");
   const [source, setSource] = useState<DataSource>("demo");
 
@@ -49,6 +50,17 @@ export function App() {
     });
     if (entry) setAudit((a) => [entry, ...a]);
     setDecided((d) => ({ ...d, [alert.baseline.clientId]: action }));
+  }
+
+  async function decideSignal(alert: Alert, signalId: string, category: string, action: "validate" | "dismiss") {
+    const { entry } = await postDecision({
+      clientId: alert.baseline.clientId,
+      actor: "demo-analyst",
+      action: `signal-${action}`,
+      detail: `${category} [${signalId}]`,
+    });
+    if (entry) setAudit((a) => [entry, ...a]);
+    setSignalDecisions((d) => ({ ...d, [signalId]: action }));
   }
 
   return (
@@ -93,6 +105,8 @@ export function App() {
         <Detail
           alert={current}
           decided={decided[current.baseline.clientId]}
+          signalDecisions={signalDecisions}
+          onSignalDecide={decideSignal}
           onBack={() => setSelected(null)}
           onDecide={decide}
         />
@@ -187,11 +201,15 @@ function Queue({
 function Detail({
   alert,
   decided,
+  signalDecisions,
+  onSignalDecide,
   onBack,
   onDecide,
 }: {
   alert: Alert;
   decided?: string;
+  signalDecisions: Record<string, string>;
+  onSignalDecide: (a: Alert, signalId: string, category: string, action: "validate" | "dismiss") => void;
   onBack: () => void;
   onDecide: (a: Alert, action: "approve" | "reject" | "escalate") => void;
 }) {
@@ -278,6 +296,23 @@ function Detail({
                   ))}
                 </div>
               )}
+              <div className="signal-hitl">
+                {signalDecisions[s.signalId] ? (
+                  <span className={`sig-decided sig-${signalDecisions[s.signalId]}`}>
+                    {signalDecisions[s.signalId] === "validate" ? "✓ validated" : "✗ dismissed"}
+                  </span>
+                ) : (
+                  <>
+                    <span className="sig-hitl-label">Analyst:</span>
+                    <button className="sig-btn sig-validate" onClick={() => onSignalDecide(alert, s.signalId, s.category, "validate")}>
+                      ✓ Validate
+                    </button>
+                    <button className="sig-btn sig-dismiss" onClick={() => onSignalDecide(alert, s.signalId, s.category, "dismiss")}>
+                      ✗ Dismiss
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </section>

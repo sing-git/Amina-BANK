@@ -120,6 +120,14 @@ body { margin: 0; }
 .dir-pos { background: #16301f; color: #5cc285; }
 .fraud-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #3a1513; color: #f06a66; border: 1px solid #5e2420; letter-spacing: .3px; }
 .action { margin: 8px 0; font-size: 13px; color: #7fb0e0; }
+.signal-hitl { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+.sig-hitl-label { font-size: 11px; color: var(--muted); }
+.sig-btn { font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; border: 1px solid var(--line); background: var(--panel-2); color: var(--txt); }
+.sig-validate { border-color: #2f7d4f; color: #5cc285; }
+.sig-dismiss { border-color: #a33f3b; color: #f06a66; }
+.sig-decided { font-size: 11px; font-weight: 700; }
+.sig-validate.sig-decided, .sig-decided.sig-validate { color: #5cc285; }
+.sig-decided.sig-dismiss { color: #f06a66; }
 
 .bars { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin: 10px 0; max-width: 420px; }
 .bars label { font-size: 11px; color: var(--muted); }

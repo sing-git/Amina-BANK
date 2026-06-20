@@ -28,7 +28,7 @@ export async function fetchAlerts(source: DataSource = "demo"): Promise<AlertsRe
 export async function postDecision(body: {
   clientId: string;
   actor: string;
-  action: "approve" | "reject" | "escalate";
+  action: string; // "approve"|"reject"|"escalate" or per-signal "signal-validate"|"signal-dismiss"
   detail?: string;
 }): Promise<{ ok: boolean; entry?: AuditEntry }> {
   try {
