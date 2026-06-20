@@ -20,7 +20,7 @@ Two entry points (run from the project root, so Python can find the
 
 ```bash
 python -m sanctions.cli "Company Name"   # check a single company name
-python -m sanctions.kyc_check            # screen every KYC customer + their news-linked entities
+python -m scrapers.sanctions.kyc_check --treshold 95            # screen every KYC customer + their news-linked entities
 ```
 
 Examples:

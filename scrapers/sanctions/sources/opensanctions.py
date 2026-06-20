@@ -17,7 +17,7 @@ from __future__ import annotations
 import csv
 from collections.abc import Iterator
 
-from scrapers.sanctions.sanctions.models import SanctionRecord
+from scrapers.sanctions.models import SanctionRecord
 
 SOURCE = "OpenSanctions"
 LIST_NAME = "OpenSanctions Consolidated Sanctions"

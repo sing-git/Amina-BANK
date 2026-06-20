@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-20T17:15:27.435467+00:00",
-  "threshold": 85.0,
+  "generated_at": "2026-06-20T18:33:31.257128+00:00",
+  "threshold": 95.0,
   "names_screened": 120,
-  "flagged_count": 5,
+  "flagged_count": 1,
   "flags": [
     {
       "name": "Banco Nacional de Cuba",
@@ -40,136 +40,6 @@
           "programs": [
             "US OFAC Specially Designated Nationals (SDN) List",
             "US Trade Consolidated Screening List (CSL)"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Paradigm",
-      "kind": "Linked entity",
-      "contexts": [
-        {
-          "linked_to": "Animoca Brands Corporation Limited",
-          "role": "investor",
-          "dimension": "business_model_change",
-          "title": "Animoca Brands cofounder Yat Siu argues Asia will fuse AI and the blockchain before the West does | Fortune",
-          "url": "https://fortune.com/2026/06/15/animoca-brands-cofounder-yat-siu-asia-ai-blockchain/"
-        }
-      ],
-      "matches": [
-        {
-          "score": 94.1,
-          "matched_name": "4Paradigm",
-          "is_primary": false,
-          "entity_type": "Entity",
-          "source": "OpenSanctions",
-          "list_name": "OpenSanctions Consolidated Sanctions",
-          "entity_id": "trade-csl-0554a47812f50a048cfa5270ab75a8dd0c6c2f3b8683d3e730e660a2",
-          "programs": [
-            "US Trade Consolidated Screening List (CSL)"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Saudi Arabia",
-      "kind": "Linked entity",
-      "contexts": [
-        {
-          "linked_to": "Animoca Brands Corporation Limited",
-          "role": "delegation of investors",
-          "dimension": "business_model_change",
-          "title": "Minds by Animoca Brands and HKSTP launch ‘Build East’ demo day to unveil Hong Kong’s top agentic AI builders | Animoca Brands",
-          "url": "https://www.animocabrands.com/announcement/minds-by-animoca-brands-and-hkstp-launch-build-east-demo-day-to-unveil-hong-kongs-top-agentic-ai-builders"
-        }
-      ],
-      "matches": [
-        {
-          "score": 90.4,
-          "matched_name": "ISIL-SAUDI ARABIA",
-          "is_primary": true,
-          "entity_type": "Entity",
-          "source": "OFAC",
-          "list_name": "SDN List",
-          "entity_id": "19889",
-          "programs": [
-            "SDGT"
-          ]
-        },
-        {
-          "score": 90.4,
-          "matched_name": "ISIL-Saudi Arabia",
-          "is_primary": true,
-          "entity_type": "Entity",
-          "source": "OpenSanctions",
-          "list_name": "OpenSanctions Consolidated Sanctions",
-          "entity_id": "NK-LcWK3yRR3CB4mKitu45aUE",
-          "programs": [
-            "Taiwan Strategic High-Tech Commodities Entity List",
-            "US OFAC Specially Designated Nationals (SDN) List",
-            "US Trade Consolidated Screening List (CSL)"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Superior.Trade",
-      "kind": "Linked entity",
-      "contexts": [
-        {
-          "linked_to": "Animoca Brands Corporation Limited",
-          "role": "investee company within Animoca Brands' new investment fund and agentic ecosystem",
-          "dimension": "business_model_change",
-          "title": "Animoca Brands invests in Superior.Trade to advance AI agent trading on Minds",
-          "url": "https://cryptobriefing.com/animoca-invests-superior-trade-ai/"
-        }
-      ],
-      "matches": [
-        {
-          "score": 85.2,
-          "matched_name": "Super Trade",
-          "is_primary": false,
-          "entity_type": "Entity",
-          "source": "OpenSanctions",
-          "list_name": "OpenSanctions Consolidated Sanctions",
-          "entity_id": "NK-Zy2Qrneh9WyF35k68bdkZF",
-          "programs": [
-            "US Trade Consolidated Screening List (CSL)"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Vanguard Group Inc.",
-      "kind": "Linked entity",
-      "contexts": [
-        {
-          "linked_to": "Alphabet Inc. (Google LLC)",
-          "role": "increased holdings",
-          "dimension": "ownership_change",
-          "title": "7,925 Shares in Alphabet Inc. $GOOG Acquired by Claris Financial LLC - Daily Political",
-          "url": "https://www.dailypolitical.com/2026/06/19/7925-shares-in-alphabet-inc-goog-acquired-by-claris-financial-llc.html"
-        }
-      ],
-      "matches": [
-        {
-          "score": 87.5,
-          "matched_name": "Avangard",
-          "is_primary": true,
-          "entity_type": "Entity",
-          "source": "OpenSanctions",
-          "list_name": "OpenSanctions Consolidated Sanctions",
-          "entity_id": "NK-k3EFJwGxmWwv3PpKXuVwZc",
-          "programs": [
-            "Belgian Financial Sanctions",
-            "Canadian Consolidated Autonomous Sanctions List",
-            "EU Financial Sanctions Files (FSF)",
-            "French National Asset Freezing System",
-            "Monaco National Fund Freezing List",
-            "New Zealand Russia Sanctions",
-            "Swiss SECO Sanctions/Embargoes",
-            "UK FCDO Sanctions List",
-            "Ukraine NSDC State Register of Sanctions"
           ]
         }
       ]

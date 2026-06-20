@@ -22,10 +22,10 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from scrapers.sanctions.sanctions.matcher import SanctionIndex
-from scrapers.sanctions.sanctions.registry import load_all_records
+from scrapers.sanctions.matcher import SanctionIndex
+from scrapers.sanctions.registry import load_all_records
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 KYC_FILE = PROJECT_ROOT / "docs" / "kyc_database.json"
 DRIFT_SIGNALS_FILE = PROJECT_ROOT / "scrapers" / "news-feed" / "kyc_drift_signals.json"
 FLAGS_FILE = Path(__file__).resolve().parent / "kyc_sanctions_flags.json"
