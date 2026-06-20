@@ -65,10 +65,17 @@
   },
 
   "riskArchetypes": {
-    "_doc": "reference risk-pattern sentences (FATF/AML red flags). Incoming narrative is compared against each.",
+    "_doc": "reference risk-pattern sentences (FATF/AML red flags). Incoming narrative is embedded and compared against each; the closest match hints at which drift dimension applies.",
     "high_leverage_crypto": "High-leverage crypto derivatives trading platform offering up to 100x leverage",
     "shell_company": "Inactive entity with no verifiable business operations or physical presence",
     "sanctioned_jurisdiction_move": "Relocation of legal domicile or operations to a jurisdiction under international sanctions",
-    "unexplained_volume_surge": "Sudden, unexplained surge in transaction volume inconsistent with stated business activity"
+    "unexplained_volume_surge": "Sudden, unexplained surge in transaction volume inconsistent with stated business activity",
+    "legal_regulatory_action": "Company facing lawsuits, regulatory fines, criminal investigation, or enforcement action",
+    "key_personnel_change": "Abrupt change of chief executive, chief financial officer, or board members",
+    "nominee_ownership": "Ownership obscured through nominee shareholders or layered holding companies",
+    "legal_form_change": "Conversion of legal form to an offshore international business company or trust",
+    "rapid_geographic_expansion": "Rapid expansion of operations into multiple high-risk or offshore jurisdictions",
+    "website_content_change": "Company website now advertises a different, higher-risk line of business than at onboarding",
+    "pep_exposure": "An owner or officer becomes a politically exposed person or a close associate of one"
   }
 }

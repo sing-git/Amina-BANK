@@ -161,6 +161,43 @@ Implementation note: adding a category = add it to `SignalCategory`, give it a w
 `riskPolicy.json`, and a default action in `recommendations.ts`. Numeric ones need a rule; narrative
 ones just need an archetype + LLM.
 
+### 5.1 How the taxonomy was built / 어떻게 만들었나
+
+**EN.** The categories are not invented arbitrarily — each is derived from three grounded sources,
+so we can defend every one when a judge asks "why this dimension?":
+1. **README's 10 use-case rows** — the challenge's own reference table (e.g. "ownership change →
+   KYC drift", "jurisdiction move → structural risk change").
+2. **FATF red-flag typologies** — internationally recognized AML risk factors. This is also what
+   sets the **weight tiers**: FATF treats beneficial-ownership and PEP exposure as high-risk, so
+   `nominee_ownership` (15) and `pep_exposure` (16) carry high weight; a cosmetic `domain_change`
+   (4) is low.
+3. **Available data sources** — every category must be detectable from a real source (news,
+   registry, ICIJ, OpenSanctions, internal transactions). A dimension with no source is dropped.
+
+Each category is therefore a tuple: `(drift dimension, source, detection method, weight)`.
+Implemented across: `SignalCategory` (type) + `riskPolicy.signalWeights` (weight) +
+`recommendations.RECOMMENDED_ACTIONS` (action) + a `riskArchetype` (so the embedding gate can match
+narrative ones) + a `ruleDiff` formula (for numeric ones).
+
+**KR.** 카테고리는 임의로 만든 게 아니라 **3개 근거**에서 도출 — 심사에서 "왜 이 차원?"에 답할 수
+있도록: ① README 10개 use-case 표, ② FATF 적색신호(가중치 tier도 여기서 — 실소유주·PEP는 고위험이라
+가중치 높음, 단순 도메인 변경은 낮음), ③ 가용 데이터 소스(검출 가능한 것만). 각 카테고리 = `(차원,
+소스, 검출방법, 가중치)` 튜플.
+
+### 5.2 What weight means / 가중치의 의미
+
+**EN.** Weight is **relative importance**, NOT "good/bad". It scales how much a fired signal pushes
+the composite score:
+```
+contribution = magnitude × (weight / MAX_WEIGHT) × confidence
+```
+`MAX_WEIGHT` = the largest weight (20, `business_model_pivot`). So a category at weight 20 contributes
+fully at its magnitude; weight 10 contributes half as much for the same magnitude/confidence. Higher
+weight = "compliance policy considers this drift type more dangerous", set per the FATF tiers above.
+Weights live in `riskPolicy.json`, owned by compliance — the AI executes the policy, it doesn't set
+it. **KR.** 가중치 = 상대적 중요도(좋다/나쁘다 아님). 높을수록 그 신호가 점수를 더 많이 올림. FATF
+tier 기준. 정책 파일 소유는 컴플라이언스 — AI는 정책을 실행만 함.
+
 ---
 
 ## 6. Core data types / 핵심 데이터 타입
