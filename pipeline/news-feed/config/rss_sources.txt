@@ -24,12 +24,6 @@ https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839
 https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664
 #Health and science
 https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000108
-#Autos
-https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000101
-#Energy
-https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19836768
-#Retail 
-https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000116
 #Travel
 https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000739
 
@@ -57,7 +51,6 @@ https://feeds.npr.org/1017/rss.xml
 https://feeds.npr.org/1019/rss.xml
 
 #Yahoo Finance
-
 https://news.yahoo.com/rss/news
 https://news.yahoo.com/rss/tech
 
