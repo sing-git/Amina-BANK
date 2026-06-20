@@ -1,0 +1,58 @@
+[
+  {
+    "company_id": "CUST-001",
+    "legal_name": "The Boeing Company",
+    "domain": "boeing.com",
+    "kyc_baseline": {
+      "expected_business_model": "Design and manufacturing of commercial airplanes and aerospace systems",
+      "expected_activity_and_volumes": "International SWIFT transfers linked to government contracts and airlines, > 5 billion USD per month",
+      "risk_rating": "Medium"
+    },
+    "key_personnel": {
+      "CEO": "David Calhoun",
+      "CFO": "Brian West"
+    }
+  },
+  {
+    "company_id": "CUST-002",
+    "legal_name": "Terraform Labs",
+    "domain": "terra.money",
+    "kyc_baseline": {
+      "expected_business_model": "Development of blockchain software and decentralized finance (DeFi) protocols",
+      "expected_activity_and_volumes": "B2B payments and crypto transfers, approximately 10 million USD per month",
+      "risk_rating": "Medium"
+    },
+    "key_personnel": {
+      "CEO": "Do Kwon",
+      "CTO": "Nicholas Platias"
+    }
+  },
+  {
+    "company_id": "CUST-003",
+    "legal_name": "Revolut Ltd",
+    "domain": "revolut.com",
+    "kyc_baseline": {
+      "expected_business_model": "Mobile e-wallet application and prepaid travel payment card",
+      "expected_activity_and_volumes": "Low-value B2C credit card top-ups, approximately 5 million USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Nikolay Storonsky",
+      "CTO": "Vlad Yatsenko"
+    }
+  },
+  {
+    "company_id": "CUST-004",
+    "legal_name": "Pfizer Inc.",
+    "domain": "pfizer.com",
+    "kyc_baseline": {
+      "expected_business_model": "Research, development, and manufacturing of global biopharmaceutical products",
+      "expected_activity_and_volumes": "Massive B2B transactions (hospitals, governments), > 4 billion USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Albert Bourla",
+      "CSO": "Mikael Dolsten"
+    }
+  }
+]

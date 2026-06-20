@@ -1,0 +1,7 @@
+feedparser
+requests
+trafilatura
+
+# Company NER (entity_extractor.py). Pulls in torch + transformers + huggingface_hub.
+# First run downloads the model (~hundreds of MB) to ~/.cache/huggingface (outside the repo).
+gliner
