@@ -1,0 +1,86 @@
+{
+  "policyId": "default-private-bank-v1",
+  "version": "2026-06-20",
+  "approvedBy": "compliance-policy-board",
+  "_doc": "SINGLE source of every tunable. Swap this file (or its values) to onboard a different institution or client segment — no code changes. The AI executes this policy; it does not set it.",
+
+  "flagBands": {
+    "_doc": "compositeScore (0-100) → riskFlag. < mediumFrom = low; < highFrom = medium; else high.",
+    "mediumFrom": 30,
+    "highFrom": 60
+  },
+
+  "softeningFactor": 0.3,
+
+  "signalWeights": {
+    "_doc": "relative importance per signal category; scaled by weight/maxWeight in the score.",
+    "business_model_pivot": 20,
+    "ownership_change": 15,
+    "cross_border_anomaly": 14,
+    "structuring_pattern": 14,
+    "jurisdiction_change": 10,
+    "dormancy_break": 8,
+    "negative_news": 8,
+    "entity_name_change": 4,
+    "domain_change": 4,
+    "funding_scale_change": 3,
+    "legal_regulatory_action": 12,
+    "key_personnel_change": 6,
+    "pep_exposure": 16,
+    "nominee_ownership": 15,
+    "legal_form_change": 8,
+    "website_content_change": 5,
+    "rapid_geographic_expansion": 6,
+    "unexplained_volume_surge": 12,
+    "negative_sentiment": 5
+  },
+
+  "transactionRules": {
+    "_doc": "thresholds for the numeric AML typology checks (ruleDiff).",
+    "windowDays": 30,
+    "ctrThresholdUSD": 10000,
+    "structuringBandLo": 0.8,
+    "structuringMinCount": 3,
+    "volumeSurgeRatio": 0.5,
+    "passthroughRatio": 0.8,
+    "dormancyDays": 180
+  },
+
+  "embeddingGate": {
+    "_doc": "a narrative signal escalates to Stage 2 if baselineSim < baselineSimMax OR maxArchetypeSim > archetypeSimMin. NOTE: these thresholds are calibrated for simpleEmbed. With EMBED_BACKEND=transformers (real sentence-transformers) similarity runs on a lower scale — recalibrate, e.g. baselineSimMax≈0.45, archetypeSimMin≈0.35.",
+    "baselineSimMax": 0.6,
+    "archetypeSimMin": 0.55
+  },
+
+  "signalFilter": {
+    "_doc": "drop weak/low-value signals so they don't clutter the alert: dropped only if confidence < minConfidence AND magnitude < minMagnitude (a signal strong on either axis is kept).",
+    "minConfidence": 0.4,
+    "minMagnitude": 50
+  },
+
+  "sanctions": {
+    "_doc": "two-tier name screening. score ≥ autoThreshold (and identifier match, if available) → auto CRITICAL. reviewThreshold ≤ score < autoThreshold → human review queue, NOT auto-blocked. < reviewThreshold → ignored. Avoids homonym false positives.",
+    "autoThreshold": 98,
+    "reviewThreshold": 85
+  },
+
+  "jury": {
+    "_doc": "adversarial jury on HIGH cases: a prosecutor argues the risk is real, a defense argues it is benign, a judge decides. Adds explainability for the escalated few. Set enabled=false to skip.",
+    "enabled": true
+  },
+
+  "riskArchetypes": {
+    "_doc": "reference risk-pattern sentences (FATF/AML red flags). Incoming narrative is embedded and compared against each; the closest match hints at which drift dimension applies.",
+    "high_leverage_crypto": "High-leverage crypto derivatives trading platform offering up to 100x leverage",
+    "shell_company": "Inactive entity with no verifiable business operations or physical presence",
+    "sanctioned_jurisdiction_move": "Relocation of legal domicile or operations to a jurisdiction under international sanctions",
+    "unexplained_volume_surge": "Sudden, unexplained surge in transaction volume inconsistent with stated business activity",
+    "legal_regulatory_action": "Company facing lawsuits, regulatory fines, criminal investigation, or enforcement action",
+    "key_personnel_change": "Abrupt change of chief executive, chief financial officer, or board members",
+    "nominee_ownership": "Ownership obscured through nominee shareholders or layered holding companies",
+    "legal_form_change": "Conversion of legal form to an offshore international business company or trust",
+    "rapid_geographic_expansion": "Rapid expansion of operations into multiple high-risk or offshore jurisdictions",
+    "website_content_change": "Company website now advertises a different, higher-risk line of business than at onboarding",
+    "pep_exposure": "An owner or officer becomes a politically exposed person or a close associate of one"
+  }
+}

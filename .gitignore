@@ -1,46 +1,24 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-
-# Environment / secrets
+# secrets — NEVER commit these
+**/.env
+**/.env.local
 .env
 .env.*
-*.local
+!**/.env.example
 
-# News-feed pipeline generated data (regenerate with pipeline/news-feed/execute.py)
-pipeline/news-feed/news.json
-pipeline/news-feed/news_entities.json
-pipeline/news-feed/selected/
-pipeline/news-feed/selected_articles.json
-
-# Node (frontend/backend)
+# node
 node_modules/
+dist/
+build/
+*.tsbuildinfo
+*.log
 npm-debug.log*
-yarn-debug.log*
+pnpm-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# Editor / OS
+# os / editor
+.DS_Store
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
-*.swp
 
-# Sanctions list source files (large, refreshed periodically — not committed)
-data/
-# Parsed/indexed cache built from the raw source files
-.cache/
-# Generated output from sanctions/kyc_check.py (regenerate by re-running it)
-sanctions/kyc_sanctions_flags.json
-swisshacks/
+# generated synthetic data (regenerated from generators; optional to keep)
+backend/data/generated/*.json

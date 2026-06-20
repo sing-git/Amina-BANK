@@ -1,0 +1,148 @@
+[
+  {
+    "company_id": "CUST-001",
+    "legal_name": "The Boeing Company",
+    "domain": "boeing.com",
+    "kyc_baseline": {
+      "expected_business_model": "Design and manufacturing of commercial airplanes and aerospace systems",
+      "expected_activity_and_volumes": "International SWIFT transfers linked to government contracts and airlines, > 5 billion USD per month",
+      "risk_rating": "Medium"
+    },
+    "key_personnel": {
+      "CEO": "David Calhoun",
+      "CFO": "Brian West"
+    }
+  },
+  {
+    "company_id": "CUST-002",
+    "legal_name": "Terraform Labs",
+    "domain": "terra.money",
+    "kyc_baseline": {
+      "expected_business_model": "Development of blockchain software and decentralized finance (DeFi) protocols",
+      "expected_activity_and_volumes": "B2B payments and crypto transfers, approximately 10 million USD per month",
+      "risk_rating": "Medium"
+    },
+    "key_personnel": {
+      "CEO": "Do Kwon",
+      "CTO": "Nicholas Platias"
+    }
+  },
+  {
+    "company_id": "CUST-003",
+    "legal_name": "Revolut Ltd",
+    "domain": "revolut.com",
+    "kyc_baseline": {
+      "expected_business_model": "Mobile e-wallet application and prepaid travel payment card",
+      "expected_activity_and_volumes": "Low-value B2C credit card top-ups, approximately 5 million USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Nikolay Storonsky",
+      "CTO": "Vlad Yatsenko"
+    }
+  },
+  {
+    "company_id": "CUST-004",
+    "legal_name": "Pfizer Inc.",
+    "domain": "pfizer.com",
+    "kyc_baseline": {
+      "expected_business_model": "Research, development, and manufacturing of global biopharmaceutical products",
+      "expected_activity_and_volumes": "Massive B2B transactions (hospitals, governments), > 4 billion USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Albert Bourla",
+      "CSO": "Mikael Dolsten"
+    }
+  },
+  {
+    "company_id": "CUST-005",
+    "legal_name": "Credit Suisse Group AG",
+    "domain": "credit-suisse.com",
+    "kyc_baseline": {
+      "expected_business_model": "Swiss global investment banking and financial services; wealth management, investment banking, asset management",
+      "expected_activity_and_volumes": "Interbank SWIFT transfers, institutional settlement flows, > 20 billion USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Ulrich Koerner",
+      "CFO": "Dixit Joshi"
+    },
+    "notes": "Systemically important Swiss bank (G-SIB). Long-established counterparty relationship. No adverse media at onboarding. Expected stable, diversified institutional flows."
+  },
+  {
+    "company_id": "CUST-006",
+    "legal_name": "Animoca Brands Corporation Limited",
+    "domain": "animocabrands.com",
+    "kyc_baseline": {
+      "expected_business_model": "Mobile gaming application developer and digital entertainment company; primary revenues from in-app purchases and licensing",
+      "expected_activity_and_volumes": "B2C and B2B payments for mobile game licensing and digital content, approximately 8 million USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Robby Yung",
+      "Chairman": "Yat Siu"
+    },
+    "notes": "Onboarded as a mobile gaming company. Jurisdiction: Hong Kong. No crypto or NFT exposure declared at onboarding. Expected stable licensing revenue streams."
+  },
+  {
+    "company_id": "CUST-007",
+    "legal_name": "Bybit Fintech Limited",
+    "domain": "bybit.com",
+    "kyc_baseline": {
+      "expected_business_model": "Cryptocurrency derivatives exchange platform; B2B and retail trading services for crypto perpetual contracts",
+      "expected_activity_and_volumes": "Crypto-to-fiat settlement and OTC desk transfers, approximately 50 million USD per month",
+      "risk_rating": "Medium"
+    },
+    "key_personnel": {
+      "CEO": "Ben Zhou",
+      "COO": "Helen Liu"
+    },
+    "notes": "Registered in BVI, operational HQ Dubai. Elevated baseline risk due to crypto derivatives exposure and retail client base. Enhanced due diligence completed at onboarding. Expected counterparties: institutional market makers and OTC desks."
+  },
+  {
+    "company_id": "CUST-008",
+    "legal_name": "JPEX Exchange Limited",
+    "domain": "jpex.co",
+    "kyc_baseline": {
+      "expected_business_model": "Licensed cryptocurrency spot exchange; retail trading and custody services for digital assets in Hong Kong",
+      "expected_activity_and_volumes": "Retail crypto on/off-ramp fiat flows, approximately 15 million USD per month",
+      "risk_rating": "Medium"
+    },
+    "key_personnel": {
+      "CEO": "Unknown — management undisclosed at onboarding",
+      "Compliance Officer": "Disclosed as local Hong Kong representative"
+    },
+    "notes": "Claimed licensing status verified at onboarding via HKSFC registry — license subsequently found to be fabricated. Onboarded with Medium risk rating based on stated regulatory compliance. Key management identities not fully verified — flagged as documentation gap at onboarding."
+  },
+  {
+    "company_id": "CUST-009",
+    "legal_name": "Alphabet Inc. (Google LLC)",
+    "domain": "google.com",
+    "kyc_baseline": {
+      "expected_business_model": "Digital advertising technology, cloud computing services, and consumer software products",
+      "expected_activity_and_volumes": "Large-volume B2B advertising revenue settlements and vendor payments, > 10 billion USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Sundar Pichai",
+      "CFO": "Ruth Porat"
+    },
+    "notes": "US-listed mega-cap. Long-established counterparty. Flows expected to be highly stable and consistent with advertising and cloud revenue cycles."
+  },
+  {
+    "company_id": "CUST-010",
+    "legal_name": "Amazon.com Inc.",
+    "domain": "amazon.com",
+    "kyc_baseline": {
+      "expected_business_model": "E-commerce marketplace operator, cloud infrastructure services (AWS), and digital media distribution",
+      "expected_activity_and_volumes": "High-volume B2B and B2C payment flows including third-party seller disbursements and AWS enterprise billing, > 15 billion USD per month",
+      "risk_rating": "Low"
+    },
+    "key_personnel": {
+      "CEO": "Andy Jassy",
+      "CFO": "Brian Olsavsky"
+    },
+    "notes": "US-listed mega-cap. Highly diversified revenue streams. Expected flows span AWS enterprise, marketplace seller payouts, and Prime subscription billing globally."
+  }
+]
