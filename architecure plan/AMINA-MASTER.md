@@ -428,7 +428,7 @@ Stage 3, cost table last.
 **✅ Done:** full pipeline; riskPolicy.json; fraud formulas + eval (5/5); weak-signal filter;
 per-signal suggestedAction + fraud badge; live news; multi-model synthetic generator + ground-truth
 labels; Postgres layer; team integration (news/kyc/sanctions adapters) → /api/portfolio; Kiara
-sanctions → hard gate; per-signal HITL (validate/dismiss/note); dashboard Demo/Portfolio toggle;
+sanctions → hard gate; per-signal HITL (approve/reject/escalate/note); dashboard Demo/Portfolio toggle;
 **two-tier sanctions screening** (auto ≥98 / review 85–98 + jurisdiction check + review-queue
 banner); **per-stage hybrid LLM** (Stage 2 local gemma / Stage 3 Claude, policy via
 STAGE2_PROVIDER/STAGE3_PROVIDER); **TSLM-lite** time-series summary injected into Stage 3;
@@ -437,11 +437,13 @@ STAGE2_PROVIDER/STAGE3_PROVIDER); **TSLM-lite** time-series summary injected int
 **Postgres 24h ingestion** (`db:ingest` / `scheduler` / `db:status`, interval via INGEST_INTERVAL_MS);
 **Apertus** (Swiss LLM) provider + backend landing page + per-signal approve/reject/escalate;
 **real semantic embeddings** option via Transformers.js (`EMBED_BACKEND=transformers`,
-all-MiniLM-L6-v2, free local — recalibrate gate thresholds for its lower scale).
+all-MiniLM-L6-v2, free local); **Postgres-backed portfolio API** (scrapers→DB→API→UI loop closed:
+`/api/portfolio/alerts` reads from Postgres, falls back to JSON); cost strip removed from dashboard.
+**Full free run verified:** transformers embeddings + stub LLM, no keys, demo flags still LOW/HIGH/CRITICAL.
 
-**🔜 My TODOs:** set up Postgres + test the ingestion flow (`db:init` → `db:ingest` → `db:status`);
-run Giulio `signal_extractor.py` → kyc_drift_signals.json; run Kiara `screen_portfolio.py` →
-sanctions_hits.json; demo script + Q&A; integration→main merge (or present from integration).
+**🔜 My TODOs:** (Postgres set up + DB flow tested ✓); wire Kiara `kyc_check.py` output
+(`kyc_sanctions_flags.json`) into the sanctions adapter; install Ollama gemma for free real
+reasoning text; demo script + Q&A; integration→main merge (or present from integration).
 
 **💡 Future:** PDF/CSV export; contagion via `linked_entities` (Giulio's linked-entity graph);
 regression-fit weights on real labeled outcomes; numeric rules for the remaining new drift
