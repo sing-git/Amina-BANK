@@ -20,5 +20,10 @@ yarn-error.log*
 .vscode/
 .idea/
 
+# Sanctions list source files (large, refreshed periodically — not committed)
+data/
+# Parsed/indexed cache built from the raw source files
+.cache/
+
 # generated synthetic data (regenerated from generators; optional to keep)
 backend/data/generated/*.json
