@@ -8,10 +8,10 @@ and applies four scoring components to news signals:
   3. Embedding cosine  — sentence-transformers drift vs KYC business model (optional)
   4. Rule-based delta  — CEO mention with negative verb, jurisdiction signals, etc.
 
-Domain signals from domain_monitor.py already carry deterministic scores
-and are passed through unchanged.
+Domain signals are fully scored in domain_monitor.py (deterministic scores +
+drift aggregation) and do not pass through this scorer.
 
-Outputs layer2_output.json with risk_score and escalate_to_stage2 on every signal.
+Outputs layer2_output.json with risk_score and escalate_to_stage2 for news signals.
 
 Usage:
     python keyword_scorer.py
@@ -510,25 +510,12 @@ def main():
         get_embedding_model()
 
     results = []
-    news_count = domain_count = 0
+    news_count = 0
 
     for signal in layer1:
-        cat = signal.get("category", "")
-        if cat == "news":
-            scored = score_news_signal(signal, use_embeddings)
-            results.append(scored)
+        if signal.get("category") == "news":
+            results.append(score_news_signal(signal, use_embeddings))
             news_count += 1
-        else:
-            # Domain / sanctions signals already have deterministic scores — pass through
-            passthrough = {
-                **signal,
-                "layer": 2,
-                "scored_at": datetime.now(timezone.utc).isoformat(),
-            }
-            if "escalate_to_stage2" not in passthrough:
-                passthrough["escalate_to_stage2"] = passthrough.get("risk_score", 0) >= ESCALATION_THRESHOLD
-            results.append(passthrough)
-            domain_count += 1
 
     results.sort(key=lambda x: (not x.get("escalate_to_stage2"), -x.get("risk_score", 0)))
 
@@ -539,8 +526,6 @@ def main():
     print(f"\n{'='*60}")
     print(f"Layer 2 scoring complete")
     print(f"  News signals scored:    {news_count}")
-    print(f"  Domain signals passed:  {domain_count}")
-    print(f"  Total:                  {len(results)}")
     print(f"  Escalated to Stage 2:   {escalated}")
     print(f"  Output: {OUTPUT_FILE.name}")
     print(f"{'='*60}")
