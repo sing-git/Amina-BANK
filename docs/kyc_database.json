@@ -99,6 +99,10 @@
     "company_id": "CUST-005",
     "legal_name": "Credit Suisse Group AG",
     "domain": "credit-suisse.com",
+    "legal_form": "Aktiengesellschaft (AG)",
+    "jurisdiction": "Switzerland",
+    "company_status": "Active",
+    "ownership": "Wholly owned by UBS Group AG",
     "kyc_baseline": {
       "expected_business_model": "Swiss global investment banking and financial services; wealth management, investment banking, asset management",
       "expected_activity_and_volumes": "Interbank SWIFT transfers, institutional settlement flows, > 20 billion USD per month",
@@ -129,6 +133,10 @@
     "company_id": "CUST-006",
     "legal_name": "Animoca Brands Corporation Limited",
     "domain": "animocabrands.com",
+    "legal_form": "Public Unlisted Company",
+    "jurisdiction": "Hong Kong",
+    "company_status": "Active",
+    "ownership": "Privately held (Major shareholders: Yat Siu, Liberty City Ventures)",
     "kyc_baseline": {
       "expected_business_model": "Mobile gaming application developer and digital entertainment company; primary revenues from in-app purchases and licensing",
       "expected_activity_and_volumes": "B2C and B2B payments for mobile game licensing and digital content, approximately 8 million USD per month",
@@ -150,6 +158,10 @@
     "company_id": "CUST-007",
     "legal_name": "Bybit Fintech Limited",
     "domain": "bybit.com",
+    "legal_form": "Private Limited Company (Ltd)",
+    "jurisdiction": "British Virgin Islands",
+    "company_status": "Active",
+    "ownership": "Privately held (Backed by Ben Zhou and private investors)",
     "kyc_baseline": {
       "expected_business_model": "Cryptocurrency derivatives exchange platform; B2B and retail trading services for crypto perpetual contracts",
       "expected_activity_and_volumes": "Crypto-to-fiat settlement and OTC desk transfers, approximately 50 million USD per month",
@@ -160,7 +172,8 @@
         "ns-1675.awsdns-17.co.uk",
         "ns-407.awsdns-50.com",
         "ns-815.awsdns-37.net"
-      ]
+      ],
+      "domain_registrant_org": "Bybit Fintech Limited"
     },
     "key_personnel": {
       "CEO": "Ben Zhou",
@@ -172,6 +185,10 @@
     "company_id": "CUST-008",
     "legal_name": "JPEX Exchange Limited",
     "domain": "jpex.co",
+    "legal_form": "Private Limited Company (Ltd)",
+    "jurisdiction": "Hong Kong",
+    "company_status": "Active",
+    "ownership": "Unknown (Opaque ownership structure)",
     "kyc_baseline": {
       "expected_business_model": "Licensed cryptocurrency spot exchange; retail trading and custody services for digital assets in Hong Kong",
       "expected_activity_and_volumes": "Retail crypto on/off-ramp fiat flows, approximately 15 million USD per month",
@@ -184,15 +201,19 @@
       "domain_registrant_org": "Domains By Proxy, LLC"
     },
     "key_personnel": {
-      "CEO": "Unknown \u2014 management undisclosed at onboarding",
+      "CEO": "Unknown — management undisclosed at onboarding",
       "Compliance Officer": "Disclosed as local Hong Kong representative"
     },
-    "notes": "Claimed licensing status verified at onboarding via HKSFC registry \u2014 license subsequently found to be fabricated. Onboarded with Medium risk rating based on stated regulatory compliance. Key management identities not fully verified \u2014 flagged as documentation gap at onboarding."
+    "notes": "Claimed licensing status verified at onboarding via HKSFC registry — license subsequently found to be fabricated. Onboarded with Medium risk rating based on stated regulatory compliance. Key management identities not fully verified — flagged as documentation gap at onboarding."
   },
   {
     "company_id": "CUST-009",
     "legal_name": "Alphabet Inc. (Google LLC)",
     "domain": "google.com",
+    "legal_form": "General Corporation (Publicly Traded)",
+    "jurisdiction": "US",
+    "company_status": "Active",
+    "ownership": "Widely held public company (Institutional investors: Vanguard, BlackRock, etc.)",
     "kyc_baseline": {
       "expected_business_model": "Digital advertising technology, cloud computing services, and consumer software products",
       "expected_activity_and_volumes": "Large-volume B2B advertising revenue settlements and vendor payments, > 10 billion USD per month",
@@ -216,6 +237,10 @@
     "company_id": "CUST-010",
     "legal_name": "Amazon.com Inc.",
     "domain": "amazon.com",
+    "legal_form": "General Corporation (Publicly Traded)",
+    "jurisdiction": "US",
+    "company_status": "Active",
+    "ownership": "Widely held public company (Institutional investors: Vanguard, State Street, BlackRock)",
     "kyc_baseline": {
       "expected_business_model": "E-commerce marketplace operator, cloud infrastructure services (AWS), and digital media distribution",
       "expected_activity_and_volumes": "High-volume B2B and B2C payment flows including third-party seller disbursements and AWS enterprise billing, > 15 billion USD per month",
