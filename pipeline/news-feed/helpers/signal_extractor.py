@@ -34,7 +34,7 @@ import requests
 
 import brave_search
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # news-feed root (this file lives in helpers/)
 KYC_FILE = BASE_DIR.parent.parent / "docs" / "kyc_database.json"
 SELECTED_DIR = BASE_DIR / "selected"
 OUTPUT_FILE = BASE_DIR / "kyc_drift_signals.json"

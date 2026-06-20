@@ -23,7 +23,7 @@ from gliner import GLiNER
 # scraping — that is guarded under `if __name__ == "__main__"`.
 from news_pipeline import normalize_for_match, show_progress
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # news-feed root (this file lives in helpers/)
 INPUT_FILE = BASE_DIR / "news.json"
 OUTPUT_FILE = BASE_DIR / "news_entities.json"
 

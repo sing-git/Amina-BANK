@@ -21,7 +21,7 @@ import feedparser
 import requests
 import trafilatura
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # news-feed root (this file lives in helpers/)
 SOURCES_FILE = BASE_DIR / "config" / "rss_sources.txt"
 OUTPUT_FILE = BASE_DIR / "news.json"
 

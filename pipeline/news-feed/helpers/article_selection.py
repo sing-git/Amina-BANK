@@ -19,7 +19,7 @@ import json
 import re
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # news-feed root (this file lives in helpers/)
 INPUT_FILE = BASE_DIR / "news_entities.json"
 # Per-company selected-article files land here, one per KYC customer, so each
 # stage of the pipeline leaves an inspectable artifact.

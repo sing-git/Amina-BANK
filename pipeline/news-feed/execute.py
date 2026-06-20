@@ -28,14 +28,16 @@ from pathlib import Path
 import requests
 
 BASE_DIR = Path(__file__).resolve().parent
+HELPERS_DIR = BASE_DIR / "helpers"
 OLLAMA_TAGS_URL = "http://localhost:11434/api/tags"
 
 
 def run_stage(number, label, argv):
-    """Run one pipeline stage as a subprocess; abort the pipeline if it fails."""
+    """Run one pipeline stage (a helpers/ script) as a subprocess; abort on failure."""
     print(f"\n{'='*64}\n[{number}/4] {label}\n{'='*64}")
+    script = str(HELPERS_DIR / argv[0])
     start = time.perf_counter()
-    result = subprocess.run([sys.executable, *argv], cwd=BASE_DIR)
+    result = subprocess.run([sys.executable, script, *argv[1:]], cwd=BASE_DIR)
     elapsed = time.perf_counter() - start
     if result.returncode != 0:
         raise SystemExit(f"\nStage {number} ({label}) failed — stopping.")

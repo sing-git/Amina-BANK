@@ -30,7 +30,7 @@ from news_pipeline import (
 
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # news-feed root (this file lives in helpers/)
 KEY_FILE = BASE_DIR / "config" / "brave.key.local"
 
 BRAVE_NEWS_URL = "https://api.search.brave.com/res/v1/news/search"
