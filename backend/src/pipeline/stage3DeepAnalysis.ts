@@ -1,6 +1,6 @@
 // Stage 3 — Claude Sonnet 4.6, escalated cases only. Keyless stub fallback.
 import type { ClientBaseline, CompositeScoreResult, DeepAnalysisReport } from "../types.js";
-import { callClaude, extractJSON } from "./llm.js";
+import { callLLM, extractJSON } from "./llm.js";
 import { buildStage3User, STAGE3_SYSTEM } from "../prompts/stage3.js";
 import type { Evidence } from "./mcpNews.js";
 
@@ -20,7 +20,7 @@ export async function deepAnalyze(
 ): Promise<DeepAnalysisReport> {
   const user = buildStage3User(baseline, compositeResult, allEvidence);
 
-  const { text } = await callClaude({
+  const { text } = await callLLM({
     stage: 3,
     model: MODEL,
     system: STAGE3_SYSTEM,

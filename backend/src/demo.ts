@@ -2,7 +2,7 @@
 // Works keyless (uses stubs) and live (set ANTHROPIC_API_KEY / EVENTREGISTRY_API_KEY).
 import "dotenv/config";
 import { runPipeline } from "./pipeline/pipeline.js";
-import { costSummary, isLiveLLM } from "./pipeline/llm.js";
+import { costSummary, llmMode } from "./pipeline/llm.js";
 import { demoCases } from "./data/sampleData.js";
 
 function line() {
@@ -10,7 +10,7 @@ function line() {
 }
 
 async function main() {
-  console.log(`AMINA Dynamic Risk Profiling — demo  (LLM: ${isLiveLLM() ? "LIVE" : "STUB (no key)"})`);
+  console.log(`AMINA Dynamic Risk Profiling — demo  (LLM: ${llmMode()})`);
   line();
 
   for (const c of demoCases) {

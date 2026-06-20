@@ -1,7 +1,7 @@
 // Stage 2 — Claude Haiku 4.5, RAG-grounded single-signal classification.
 // Runs keyless via a deterministic stub (see llm.ts).
 import type { ClientBaseline, RawSignal, SignalScore } from "../types.js";
-import { callClaude, extractJSON } from "./llm.js";
+import { callLLM, extractJSON } from "./llm.js";
 import { buildStage2User, STAGE2_SYSTEM } from "../prompts/stage2.js";
 import { isFraudTypology, recommendedAction } from "./recommendations.js";
 import type { Evidence } from "./mcpNews.js";
@@ -28,7 +28,7 @@ export async function classifySignal(
 ): Promise<SignalScore> {
   const user = buildStage2User(baseline, signal, embeddingScores, retrievedEvidence);
 
-  const { text } = await callClaude({
+  const { text } = await callLLM({
     stage: 2,
     model: MODEL,
     system: STAGE2_SYSTEM,
