@@ -10,7 +10,7 @@ from __future__ import annotations
 import urllib.request
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR = Path(__file__).resolve().parent / "data"
 
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -29,6 +29,11 @@ OFAC_DEST = DATA_DIR / "ofac" / "SDN.XML"
 UN_CONSOLIDATED_URL = "https://scsanctions.un.org/resources/xml/en/consolidated.xml"
 UN_REFERER = "https://main.un.org/securitycouncil/en/content/un-sc-consolidated-list"
 UN_DEST = DATA_DIR / "un" / "consolidated.xml"
+
+# Free for non-commercial use under CC BY-NC 4.0 — see
+# sanctions/sources/opensanctions.py for the licensing note.
+OPENSANCTIONS_URL = "https://data.opensanctions.org/datasets/latest/sanctions/targets.simple.csv"
+OPENSANCTIONS_DEST = DATA_DIR / "opensanctions" / "targets.simple.csv"
 
 
 def _download(url: str, dest: Path, referer: str | None = None) -> None:
@@ -51,11 +56,18 @@ def download_un(dest: Path = UN_DEST) -> Path:
     return dest
 
 
+def download_opensanctions(dest: Path = OPENSANCTIONS_DEST) -> Path:
+    _download(OPENSANCTIONS_URL, dest)
+    return dest
+
+
 def main() -> int:
     print(f"Downloading OFAC SDN list -> {OFAC_DEST}")
     download_ofac()
     print(f"Downloading UN Consolidated List -> {UN_DEST}")
     download_un()
+    print(f"Downloading OpenSanctions Consolidated Sanctions -> {OPENSANCTIONS_DEST}")
+    download_opensanctions()
     print("Done.")
     return 0
 

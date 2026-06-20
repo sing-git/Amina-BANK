@@ -10,6 +10,7 @@ import re
 from collections.abc import Iterable
 
 from rapidfuzz import fuzz
+from rapidfuzz.distance import Levenshtein
 
 from sanctions.models import Match, SanctionRecord
 
@@ -78,6 +79,23 @@ def _directional_match(
     return matched, total
 
 
+# Below this word length, a percentage-based ratio is unreliable: "UBS" vs
+# "UBIS" or "ROCHE" vs "ROCHEL" are a single inserted letter apart yet still
+# score ~85-90% on a plain character ratio. Comparisons where both sides
+# reduce to one word this short or shorter use an edit-distance penalty
+# instead (see _short_single_word_score) so a one-letter difference can't
+# pass as a near-match the way it can for longer names.
+_SHORT_WORD_MAX_LEN = 6
+_SHORT_WORD_PENALTY_PER_EDIT = 40.0
+
+
+def _short_single_word_score(word_a: str, word_b: str) -> float:
+    if word_a == word_b:
+        return 100.0
+    distance = Levenshtein.distance(word_a, word_b)
+    return max(0.0, 100.0 - distance * _SHORT_WORD_PENALTY_PER_EDIT)
+
+
 def _weighted_score(
     tokens_a: list[str], tokens_b: list[str], weights: dict[str, float], n_docs: int
 ) -> float:
@@ -85,12 +103,58 @@ def _weighted_score(
     far more than common words shared by almost every name, and words
     present on one side but missing on the other (in either direction)
     drag the score down."""
+    if len(tokens_a) == 1 and len(tokens_b) == 1:
+        if min(len(tokens_a[0]), len(tokens_b[0])) <= _SHORT_WORD_MAX_LEN:
+            return _short_single_word_score(tokens_a[0], tokens_b[0])
+
     matched_a, total_a = _directional_match(tokens_a, tokens_b, weights, n_docs)
     matched_b, total_b = _directional_match(tokens_b, tokens_a, weights, n_docs)
     total = total_a + total_b
     if total == 0:
         return 0.0
     return 100.0 * (matched_a + matched_b) / total
+
+
+class SanctionIndex:
+    """Precomputes the word-weight table for a set of records once, so many
+    names can be screened against it without recomputing the weights (which
+    scan every record) on each call. Use this instead of `screen()` when
+    checking more than a handful of names against the same records."""
+
+    def __init__(self, records: Iterable[SanctionRecord]):
+        self.records = list(records)
+        self.choices = [normalize(r.name) for r in self.records]
+        self.choice_tokens = [c.split() for c in self.choices]
+        self.weights = _word_weights(self.choice_tokens)
+        self.n_docs = len(self.choice_tokens)
+
+    def screen(self, query: str, threshold: float = 85.0, limit: int = 10) -> list[Match]:
+        """Fuzzy-match `query` against this index's records, returning hits
+        scoring at or above `threshold` (0-100), best first, capped at
+        `limit`."""
+        query_norm = normalize(query)
+        if not query_norm:
+            return []
+        query_tokens = query_norm.split()
+
+        scored: list[tuple[int, float]] = []
+        for idx, cand_tokens in enumerate(self.choice_tokens):
+            score = _weighted_score(query_tokens, cand_tokens, self.weights, self.n_docs)
+            if score >= threshold:
+                scored.append((idx, score))
+
+        scored.sort(key=lambda pair: pair[1], reverse=True)
+        scored = scored[:limit]
+
+        return [
+            Match(
+                record=self.records[idx],
+                score=score,
+                query_normalized=query_norm,
+                name_normalized=self.choices[idx],
+            )
+            for idx, score in scored
+        ]
 
 
 def screen(
@@ -100,33 +164,6 @@ def screen(
     limit: int = 10,
 ) -> list[Match]:
     """Fuzzy-match `query` against `records`, returning hits scoring at or
-    above `threshold` (0-100), best first, capped at `limit`."""
-    records = list(records)
-    query_norm = normalize(query)
-    if not query_norm:
-        return []
-
-    choices = [normalize(r.name) for r in records]
-    choice_tokens = [c.split() for c in choices]
-    weights = _word_weights(choice_tokens)
-    n_docs = len(choice_tokens)
-    query_tokens = query_norm.split()
-
-    scored: list[tuple[int, float]] = []
-    for idx, cand_tokens in enumerate(choice_tokens):
-        score = _weighted_score(query_tokens, cand_tokens, weights, n_docs)
-        if score >= threshold:
-            scored.append((idx, score))
-
-    scored.sort(key=lambda pair: pair[1], reverse=True)
-    scored = scored[:limit]
-
-    return [
-        Match(
-            record=records[idx],
-            score=score,
-            query_normalized=query_norm,
-            name_normalized=choices[idx],
-        )
-        for idx, score in scored
-    ]
+    above `threshold` (0-100), best first, capped at `limit`. One-off
+    convenience wrapper around SanctionIndex for a single query."""
+    return SanctionIndex(records).screen(query, threshold=threshold, limit=limit)

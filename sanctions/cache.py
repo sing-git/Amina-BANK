@@ -4,7 +4,9 @@ Re-parsing a ~100MB XML export on every screening call would dominate
 runtime, so each source's records are parsed once and cached, keyed by the
 source file's path + size + mtime. Re-downloading a fresh list export
 invalidates the cache automatically.
+
 """
+#function that avoids reloading the data that already is uploaded and stored in the cache. It checks if the cache exists for the given source file, and if it does, it loads the cached records. If not, it calls the provided build function to parse the source file and create the records, then caches them for future use.
 from __future__ import annotations
 
 import hashlib
@@ -13,10 +15,10 @@ from pathlib import Path
 
 from sanctions.models import SanctionRecord
 
-CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
+CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 
 
-def _cache_key(source_path: Path) -> str:
+def _cache_key(source_path: Path) -> str: #to check whether the cache changed since last time
     stat = source_path.stat()
     digest = hashlib.sha256(f"{source_path}:{stat.st_size}:{stat.st_mtime_ns}".encode()).hexdigest()
     return digest[:16]
