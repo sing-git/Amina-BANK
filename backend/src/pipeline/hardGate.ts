@@ -6,6 +6,7 @@
 // (OpenSanctions / OFAC). The exact-match contract stays the same either way.
 
 import type { ClientBaseline } from "../types.js";
+import { loadSanctionsHits, normName } from "../ingest/sanctionsAdapter.js";
 
 export interface HardGateResult {
   matched: boolean;
@@ -13,19 +14,24 @@ export interface HardGateResult {
   sourceUrl?: string;
 }
 
-// Demo stub list. Replace `querySanctions` with the MCP call when wired up.
+// Real OFAC/UN hits produced by Kiara's bridge (scrapers/sanctions/screen_portfolio.py).
+// Empty until that file exists; then it takes priority over the demo stub.
+const REAL_HITS = loadSanctionsHits();
+
+// Demo stub list (for the bundled demo cases not present on real lists).
 const DEMO_SANCTIONS = new Set(
-  [
-    "blocked holdings ltd",
-    "ivan petrov",
-    "north star trading fze",
-  ].map((s) => s.toLowerCase().trim()),
+  ["blocked holdings ltd", "ivan petrov", "north star trading fze"].map((s) => s.toLowerCase().trim()),
 );
 
-async function querySanctions(name: string): Promise<{ hit: boolean; sourceUrl?: string }> {
-  // TODO: swap for MCP sanctions lookup (OpenSanctions/OFAC). Keep it EXACT match.
+async function querySanctions(name: string): Promise<{ hit: boolean; entity?: string; sourceUrl?: string }> {
+  // 1) real sanctions data (Kiara) first
+  const real = REAL_HITS.get(normName(name));
+  if (real) {
+    return { hit: true, entity: real.matchedEntity, sourceUrl: `sanctions:${real.source}` };
+  }
+  // 2) demo fallback
   const hit = DEMO_SANCTIONS.has(name.toLowerCase().trim());
-  return { hit, sourceUrl: hit ? "https://www.opensanctions.org" : undefined };
+  return { hit, entity: hit ? name : undefined, sourceUrl: hit ? "https://www.opensanctions.org" : undefined };
 }
 
 export async function checkSanctionsPEP(
@@ -34,7 +40,9 @@ export async function checkSanctionsPEP(
 ): Promise<HardGateResult> {
   // entity itself
   const entity = await querySanctions(legalName);
-  if (entity.hit) return { matched: true, matchedEntity: legalName, sourceUrl: entity.sourceUrl };
+  if (entity.hit) {
+    return { matched: true, matchedEntity: entity.entity ?? legalName, sourceUrl: entity.sourceUrl };
+  }
 
   // each UBO (and any PEP UBO is an automatic gate)
   for (const ubo of ubos) {
@@ -46,7 +54,7 @@ export async function checkSanctionsPEP(
       };
     }
     const hit = await querySanctions(ubo.name);
-    if (hit.hit) return { matched: true, matchedEntity: ubo.name, sourceUrl: hit.sourceUrl };
+    if (hit.hit) return { matched: true, matchedEntity: hit.entity ?? ubo.name, sourceUrl: hit.sourceUrl };
   }
 
   return { matched: false };
