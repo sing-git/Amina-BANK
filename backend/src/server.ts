@@ -1,5 +1,6 @@
 // REST API for the frontend dashboard. Holds all secrets; frontend calls these endpoints.
 import "dotenv/config";
+import { existsSync, readFileSync } from "node:fs";
 import express from "express";
 import cors from "cors";
 import { runPipeline } from "./pipeline/pipeline.js";
@@ -120,6 +121,19 @@ app.post("/api/decision", (req, res) => {
   };
   auditLog.push(entry);
   res.json({ ok: true, entry });
+});
+
+// Raw drift signals (scrapers/news-feed/kyc_drift_signals.json) for the Clusters view.
+// Served verbatim — the frontend builds the hub-and-spoke graph from this shape.
+app.get("/api/drift-signals", (_req, res) => {
+  try {
+    const path = new URL("../../scrapers/news-feed/kyc_drift_signals.json", import.meta.url);
+    if (!existsSync(path)) return res.json({ companies: [] });
+    const companies = JSON.parse(readFileSync(path, "utf8"));
+    res.json({ companies });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
 });
 
 app.get("/api/audit", (_req, res) => res.json({ auditLog }));

@@ -1,5 +1,7 @@
 import type { Alert, AuditEntry, Cost } from "./types";
 import { SEED_ALERTS, SEED_COST } from "./seed";
+import type { RawCompany } from "./clusters/graph";
+import bundledDriftSignals from "./data/kyc_drift_signals.json";
 
 // Calls the backend via the Vite proxy (/api → :8787). If the backend is
 // unreachable, transparently falls back to bundled seed data so the demo
@@ -45,6 +47,20 @@ export async function postDecision(body: {
       ok: true,
       entry: { ts: new Date().toISOString(), ...body, detail: body.detail ?? "" },
     };
+  }
+}
+
+// Raw drift signals for the Clusters view. Tries the backend, falls back to the
+// JSON bundled at build time so the graph renders even offline.
+export async function fetchDriftSignals(): Promise<RawCompany[]> {
+  try {
+    const res = await fetch("/api/drift-signals");
+    if (!res.ok) throw new Error(String(res.status));
+    const data = (await res.json()) as { companies: RawCompany[] };
+    if (!Array.isArray(data.companies) || data.companies.length === 0) throw new Error("empty");
+    return data.companies;
+  } catch {
+    return bundledDriftSignals as RawCompany[];
   }
 }
 

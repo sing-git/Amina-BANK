@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Alert, AuditEntry } from "./types";
 import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
 import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
+import { ClustersView } from "./clusters/ClustersView";
 
 const RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -13,7 +14,7 @@ export function App() {
   const [decided, setDecided] = useState<Record<string, string>>({});
   const [signalDecisions, setSignalDecisions] = useState<Record<string, string>>({});
   const [signalNotes, setSignalNotes] = useState<Record<string, string>>({});
-  const [view, setView] = useState<"queue" | "audit">("queue");
+  const [view, setView] = useState<"queue" | "audit" | "clusters">("queue");
   const [source, setSource] = useState<DataSource>("demo");
 
   useEffect(() => {
@@ -94,20 +95,27 @@ export function App() {
         <button className={view === "queue" ? "tab tab-on" : "tab"} onClick={() => setView("queue")}>
           Alert Queue
         </button>
+        <button className={view === "clusters" ? "tab tab-on" : "tab"} onClick={() => setView("clusters")}>
+          Clusters
+        </button>
         <button className={view === "audit" ? "tab tab-on" : "tab"} onClick={() => setView("audit")}>
           Audit Log {audit.length ? `(${audit.length})` : ""}
         </button>
-        <div className="source-toggle">
-          <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
-            Demo cases
-          </button>
-          <button className={source === "portfolio" ? "src src-on" : "src"} onClick={() => setSource("portfolio")}>
-            Team portfolio
-          </button>
-        </div>
+        {view !== "clusters" && (
+          <div className="source-toggle">
+            <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
+              Demo cases
+            </button>
+            <button className={source === "portfolio" ? "src src-on" : "src"} onClick={() => setSource("portfolio")}>
+              Team portfolio
+            </button>
+          </div>
+        )}
       </nav>
 
-      {loading && <div className="empty">Loading…</div>}
+      {view === "clusters" && <ClustersView />}
+
+      {loading && view !== "clusters" && <div className="empty">Loading…</div>}
 
       {!loading && view === "queue" && !current && (
         <Queue alerts={alerts} decided={decided} onOpen={setSelected} />
