@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Alert, AuditEntry, Cost } from "./types";
+import type { Alert, AuditEntry } from "./types";
 import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
 import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
 
@@ -7,8 +7,6 @@ const RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
 
 export function App() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [cost, setCost] = useState<Cost | null>(null);
-  const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -26,8 +24,6 @@ export function App() {
         (a, b) => RANK[a.composite.riskFlag] - RANK[b.composite.riskFlag],
       );
       setAlerts(sorted);
-      setCost(r.cost);
-      setLive(r.live);
       setLoading(false);
     });
   }, [source]);
@@ -91,9 +87,6 @@ export function App() {
         </div>
         <div className="topbar-right">
           <span className="advisory">ADVISORY ONLY — a human approves every decision</span>
-          <span className={`mode ${live ? "mode-live" : "mode-offline"}`}>
-            {live ? "● backend live" : "○ offline (seed data)"}
-          </span>
         </div>
       </header>
 
@@ -117,7 +110,7 @@ export function App() {
       {loading && <div className="empty">Loading…</div>}
 
       {!loading && view === "queue" && !current && (
-        <Queue alerts={alerts} cost={cost} decided={decided} onOpen={setSelected} />
+        <Queue alerts={alerts} decided={decided} onOpen={setSelected} />
       )}
 
       {!loading && view === "queue" && current && (
@@ -140,31 +133,15 @@ export function App() {
 
 function Queue({
   alerts,
-  cost,
   decided,
   onOpen,
 }: {
   alerts: Alert[];
-  cost: Cost | null;
   decided: Record<string, string>;
   onOpen: (id: string) => void;
 }) {
   return (
     <main className="wrap">
-      {cost && (
-        <div className="cost-strip">
-          <div>
-            <span className="cost-num">{cost.calls}</span> LLM calls
-          </div>
-          <div>
-            <span className="cost-num">${cost.totalUSD.toFixed(4)}</span> total
-          </div>
-          <div>
-            <span className="cost-num">${cost.costPer1000USD.toFixed(2)}</span> / 1,000 analyses
-          </div>
-          <div className="cost-note">cheap filters first · LLM only on flagged cases</div>
-        </div>
-      )}
       <table className="queue">
         <thead>
           <tr>
