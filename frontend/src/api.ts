@@ -10,14 +10,18 @@ export interface AlertsResponse {
   live: boolean;
 }
 
-export async function fetchAlerts(): Promise<AlertsResponse> {
+export type DataSource = "demo" | "portfolio";
+
+export async function fetchAlerts(source: DataSource = "demo"): Promise<AlertsResponse> {
+  const path = source === "portfolio" ? "/api/portfolio/alerts" : "/api/demo/alerts";
   try {
-    const res = await fetch("/api/demo/alerts");
+    const res = await fetch(path);
     if (!res.ok) throw new Error(String(res.status));
     const data = (await res.json()) as { alerts: Alert[]; cost: Cost };
     return { ...data, live: true };
   } catch {
-    return { alerts: SEED_ALERTS, cost: SEED_COST, live: false };
+    // portfolio has no offline fallback; demo falls back to bundled seed data
+    return { alerts: source === "portfolio" ? [] : SEED_ALERTS, cost: SEED_COST, live: false };
   }
 }
 

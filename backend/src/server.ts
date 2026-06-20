@@ -5,6 +5,8 @@ import cors from "cors";
 import { runPipeline } from "./pipeline/pipeline.js";
 import { costSummary, isLiveLLM } from "./pipeline/llm.js";
 import { demoCases } from "./data/sampleData.js";
+import { loadBaselines } from "./ingest/kycAdapter.js";
+import { loadDriftSignals } from "./ingest/newsAdapter.js";
 import type { ClientBaseline, RawSignal, TransactionRecord } from "./types.js";
 
 const app = express();
@@ -33,6 +35,24 @@ app.get("/api/demo/alerts", async (_req, res) => {
     alerts.push({ caseName: c.name, baseline: c.baseline, ...result });
   }
   res.json({ alerts, cost: costSummary() });
+});
+
+// Real portfolio: team KYC db (data/kyc_database.json) + Giulio's news drift signals,
+// each scored through the pipeline. This is the integrated end-to-end view.
+app.get("/api/portfolio/alerts", async (_req, res) => {
+  try {
+    const baselines = loadBaselines();
+    const signalsByClient = loadDriftSignals();
+    const alerts = [];
+    for (const baseline of baselines) {
+      const signals = signalsByClient[baseline.clientId] ?? [];
+      const result = await runPipeline(baseline, [], signals);
+      alerts.push({ caseName: baseline.legalName, baseline, ...result });
+    }
+    res.json({ alerts, cost: costSummary(), source: "team-data" });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
 });
 
 // Score an arbitrary client (frontend or generators POST here).

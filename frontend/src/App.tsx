@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Alert, AuditEntry, Cost } from "./types";
-import { fetchAlerts, fetchAudit, postDecision } from "./api";
+import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
 import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
 
 const RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -14,9 +14,12 @@ export function App() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [decided, setDecided] = useState<Record<string, string>>({});
   const [view, setView] = useState<"queue" | "audit">("queue");
+  const [source, setSource] = useState<DataSource>("demo");
 
   useEffect(() => {
-    fetchAlerts().then((r) => {
+    setLoading(true);
+    setSelected(null);
+    fetchAlerts(source).then((r) => {
       const sorted = [...r.alerts].sort(
         (a, b) => RANK[a.composite.riskFlag] - RANK[b.composite.riskFlag],
       );
@@ -25,6 +28,9 @@ export function App() {
       setLive(r.live);
       setLoading(false);
     });
+  }, [source]);
+
+  useEffect(() => {
     fetchAudit().then(setAudit);
   }, []);
 
@@ -67,6 +73,14 @@ export function App() {
         <button className={view === "audit" ? "tab tab-on" : "tab"} onClick={() => setView("audit")}>
           Audit Log {audit.length ? `(${audit.length})` : ""}
         </button>
+        <div className="source-toggle">
+          <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
+            Demo cases
+          </button>
+          <button className={source === "portfolio" ? "src src-on" : "src"} onClick={() => setSource("portfolio")}>
+            Team portfolio
+          </button>
+        </div>
       </nav>
 
       {loading && <div className="empty">Loading…</div>}
