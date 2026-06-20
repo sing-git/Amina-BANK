@@ -37,6 +37,7 @@ export interface TransactionRecord {
 // ── Layer 1: incoming raw signal ──────────────────────────────────
 
 export type SignalCategory =
+  // ── original 10 ──
   | "negative_news"
   | "cross_border_anomaly"
   | "structuring_pattern"
@@ -46,7 +47,17 @@ export type SignalCategory =
   | "jurisdiction_change"
   | "ownership_change"
   | "funding_scale_change"
-  | "dormancy_break";
+  | "dormancy_break"
+  // ── extended drift taxonomy ──
+  | "legal_regulatory_action" // lawsuits, fines, investigations (news)
+  | "key_personnel_change" // CEO/CFO/board change (news/registry)
+  | "pep_exposure" // a UBO/officer becomes politically exposed
+  | "nominee_ownership" // beneficial-owner obfuscation, shell layering (ICIJ)
+  | "legal_form_change" // e.g. GmbH → offshore IBC (registry)
+  | "website_content_change" // site says it does something different now
+  | "rapid_geographic_expansion" // sudden expansion into many/high-risk jurisdictions
+  | "unexplained_volume_surge" // activity jump unexplained by stated business
+  | "negative_sentiment"; // adverse-media sentiment subtype
 
 export interface RawSignal {
   signalId: string;

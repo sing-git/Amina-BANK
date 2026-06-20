@@ -23,7 +23,16 @@
     "negative_news": 8,
     "entity_name_change": 4,
     "domain_change": 4,
-    "funding_scale_change": 3
+    "funding_scale_change": 3,
+    "legal_regulatory_action": 12,
+    "key_personnel_change": 6,
+    "pep_exposure": 16,
+    "nominee_ownership": 15,
+    "legal_form_change": 8,
+    "website_content_change": 5,
+    "rapid_geographic_expansion": 6,
+    "unexplained_volume_surge": 12,
+    "negative_sentiment": 5
   },
 
   "transactionRules": {

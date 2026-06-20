@@ -7,14 +7,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { RawSignal, SignalCategory } from "../types.js";
 
-// His 7 drift dimensions → our SignalCategory.
+// His 7 drift dimensions → our SignalCategory (now using the extended taxonomy).
 const DIMENSION_TO_CATEGORY: Record<string, SignalCategory> = {
   business_model_change: "business_model_pivot",
-  activity_volume_change: "funding_scale_change",
-  key_personnel_change: "ownership_change",
+  activity_volume_change: "unexplained_volume_surge",
+  key_personnel_change: "key_personnel_change",
   ownership_change: "ownership_change",
   jurisdiction_structure_change: "jurisdiction_change",
-  adverse_media_legal: "negative_news",
+  adverse_media_legal: "legal_regulatory_action",
   sanctions_regulatory: "negative_news",
 };
 

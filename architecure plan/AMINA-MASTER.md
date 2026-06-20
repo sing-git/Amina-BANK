@@ -126,12 +126,13 @@ max(archetypeSims) > 0.55` → Stage 2.
 
 ## 5. Drift taxonomy (expanded to ~20) / 드리프트 분류 (약 20개로 확장)
 
-**EN.** Giulio's screener emits 7 dimensions; our `SignalCategory` has 10; the full target taxonomy
-below is ~20, grounded in FATF red flags + the README use-case table + the available sources. Items
-marked **(new)** are proposed extensions to implement.
+**EN.** Giulio's screener emits 7 dimensions; our `SignalCategory` now has **19 implemented**
+categories (weights in `riskPolicy.json` + recommended actions in `recommendations.ts`), grounded in
+FATF red flags + the README use-case table + the available sources. Items marked **(new)** are the
+extensions added to the type; numeric rules / archetypes for some still TODO.
 
-**KR.** Giulio는 7개, 우리 코드는 10개, 아래 전체 목표는 약 20개 (FATF 적색신호 + README 표 + 가용
-소스 기반). **(new)** 는 추가 제안.
+**KR.** Giulio는 7개, 우리 코드는 이제 **19개 구현됨** (정책 가중치 + 권고 포함). **(new)** = 타입에
+추가된 확장분 (일부는 규칙/아키타입 구현 TODO).
 
 | # | Drift dimension | Source | Route | 비고 |
 |---|---|---|---|---|
@@ -376,7 +377,11 @@ Stage 3, cost table last.
 **✅ Done:** full pipeline; riskPolicy.json; fraud formulas + eval (5/5); weak-signal filter;
 per-signal suggestedAction + fraud badge; live news; multi-model synthetic generator + ground-truth
 labels; Postgres layer; team integration (news/kyc/sanctions adapters) → /api/portfolio; Kiara
-sanctions → hard gate; per-signal HITL (validate/dismiss/note); dashboard Demo/Portfolio toggle.
+sanctions → hard gate; per-signal HITL (validate/dismiss/note); dashboard Demo/Portfolio toggle;
+**two-tier sanctions screening** (auto ≥98 / review 85–98 + jurisdiction check + review-queue
+banner); **per-stage hybrid LLM** (Stage 2 local gemma / Stage 3 Claude, policy via
+STAGE2_PROVIDER/STAGE3_PROVIDER); **TSLM-lite** time-series summary injected into Stage 3;
+**drift taxonomy expanded to 19 categories** (weights + recommended actions).
 
 **🔜 My TODOs:** run Giulio `signal_extractor.py` → kyc_drift_signals.json; run Kiara
 `screen_portfolio.py` → sanctions_hits.json; scrapers → Postgres + 24h scheduler; demo script +
