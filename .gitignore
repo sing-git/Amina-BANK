@@ -17,6 +17,13 @@ ENV/
 .env.*
 *.local
 
+# News-feed pipeline generated data (regenerate with pipeline/news-feed/execute.py)
+pipeline/news-feed/news.json
+pipeline/news-feed/news_entities.json
+pipeline/news-feed/selected/
+pipeline/news-feed/selected_articles.json
+pipeline/news-feed/kyc_drift_signals.json
+
 # Node (frontend/backend)
 node_modules/
 npm-debug.log*
