@@ -4,7 +4,7 @@ sanctions lists (OFAC + UN + OpenSanctions).
 Two kinds of names get screened:
   1. Each KYC customer's own legal name (docs/kyc_database.json)
   2. Every "linked entity" named in a drift-relevant news article about a
-     customer (pipeline/news-feed/kyc_drift_signals.json) — e.g. an acquirer,
+     customer (scrapers/news-feed/kyc_drift_signals.json) — e.g. an acquirer,
      new shareholder, regulator, or partner mentioned in coverage about that
      customer
 
@@ -13,7 +13,7 @@ bank's own customer is sanctioned, or a customer is news-linked to a
 sanctioned entity.
 
 Usage:
-    python kyc_sanctions_check.py [--threshold 85] [--limit 5]
+    python -m sanctions.kyc_check [--threshold 85] [--limit 5]
 """
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ from sanctions.registry import load_all_records
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 KYC_FILE = PROJECT_ROOT / "docs" / "kyc_database.json"
-DRIFT_SIGNALS_FILE = PROJECT_ROOT / "pipeline" / "news-feed" / "kyc_drift_signals.json"
+DRIFT_SIGNALS_FILE = PROJECT_ROOT / "scrapers" / "news-feed" / "kyc_drift_signals.json"
 FLAGS_FILE = Path(__file__).resolve().parent / "kyc_sanctions_flags.json"
 
 MAX_CONTEXTS_SHOWN = 3

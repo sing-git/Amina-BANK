@@ -35,7 +35,7 @@ python -m sanctions.kyc_check --threshold 90
 
 Reads:
 - `../docs/kyc_database.json` — every customer's own legal name
-- `../pipeline/news-feed/kyc_drift_signals.json` — every "linked entity" named
+- `../scrapers/news-feed/kyc_drift_signals.json` — every "linked entity" named
   in drift-relevant news about a customer (e.g. an acquirer, new shareholder,
   regulator, or partner)
 
