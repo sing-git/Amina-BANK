@@ -1,0 +1,765 @@
+"""Stage 1 risk scorer — cheap filter that runs on ALL signals.
+
+Five scoring components (all local / free):
+  1. Keyword match       — 500-term lexicon across 15 signal types against title + text
+  2. Entity fuzzy match  — rapidfuzz ratio of NER entities vs KYC name
+  3. Sanctions lookup    — OpenSanctions API exact match (deterministic, $0)
+  4. Embedding cosine    — sentence-transformers vs KYC baseline business model
+  5. Rule-based delta    — CEO name, jurisdiction, legal form in article text
+
+Every signal is written to the audit log regardless of score.
+Articles with risk_score >= ESCALATION_THRESHOLD are flagged for Stage 2.
+
+Usage:
+    python stage1_scorer.py --company-id CUST-002
+    python stage1_scorer.py --company-id CUST-002 --no-embeddings  # faster, skip step 4
+"""
+
+import argparse
+import json
+import re
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+from rapidfuzz import fuzz
+
+BASE_DIR = Path(__file__).resolve().parent
+ARTICLES_FILE = BASE_DIR / "selected_articles.json"
+KYC_FILE = BASE_DIR.parent.parent / "kyc_database.json"
+OUTPUT_FILE = BASE_DIR / "stage1_output.json"
+AUDIT_LOG = BASE_DIR / "audit_log.jsonl"
+
+ESCALATION_THRESHOLD = 0.40
+OPENSANCTIONS_API = "https://api.opensanctions.org/match/default"
+
+# ---------------------------------------------------------------------------
+# 1. KEYWORD LEXICON  — signal_type -> (base_score, [terms])
+#
+# 15 signal types, ~500 terms covering:
+#   sanctions, crime, dissolution, regulation, leadership, ownership,
+#   jurisdiction, business model, PEP exposure, terrorism financing,
+#   cyber incidents, financial crime, dormancy, structural risk, adverse media
+#
+# Scoring: first match sets signal_type; every subsequent hit adds 40% of
+# its base_score (diminishing returns). Total capped at 1.0.
+# ---------------------------------------------------------------------------
+RISK_LEXICON = [
+
+    # -----------------------------------------------------------------------
+    # Tier 1 — Hard flags (score 0.85–0.95): immediate escalation regardless
+    # -----------------------------------------------------------------------
+
+    ("SANCTIONS_HIT", 0.92, [
+        # Major sanctions programmes
+        "sanctions", "sanctioned", "ofac", "sdn list", "specially designated national",
+        "eu sanctions", "eu financial sanctions", "un sanctions", "un security council",
+        "uk sanctions", "hm treasury sanctions", "consolidated list",
+        "swiss seco sanctions", "swiss sanctions",
+        # Listing actions
+        "blacklisted", "watchlist", "designated entity", "designated individual",
+        "targeted sanctions", "asset freeze", "assets frozen", "funds frozen",
+        "travel ban", "arms embargo", "export ban", "import ban",
+        "delistment", "relisted", "added to sanctions list",
+        # Enforcement bodies
+        "interpol red notice", "interpol notice", "europol",
+        "fatf blacklist", "fatf grey list", "fatf high-risk jurisdiction",
+        "non-cooperative jurisdiction", "aml deficiencies",
+        # Evasion signals
+        "sanctions evasion", "sanctions circumvention", "sanctions busting",
+        "front company", "shell company sanctions", "proxy entity",
+    ]),
+
+    ("TERRORISM_FINANCING", 0.95, [
+        # Terrorism
+        "terrorism", "terrorist financing", "financing terrorism",
+        "counter-terrorism", "terrorist organisation", "proscribed organisation",
+        "designated terrorist", "terrorist network", "extremist group",
+        "jihad", "isis", "al-qaeda", "hezbollah", "hamas", "al-shabaab",
+        "boko haram", "wagner group", "sanctioned militia",
+        # Proliferation
+        "proliferation financing", "weapons of mass destruction", "wmd",
+        "nuclear proliferation", "ballistic missile", "dual-use goods",
+        "export control violation", "arms trafficking",
+        # Specific programmes
+        "sdgt", "specially designated global terrorist",
+        "terrorist asset freezing",
+    ]),
+
+    ("CRIMINAL_CHARGES", 0.85, [
+        # Arrest / prosecution
+        "arrested", "arrest warrant", "detained", "apprehended", "in custody",
+        "indicted", "indictment", "charged", "criminal charges", "criminal complaint",
+        "extradited", "extradition", "deportation order", "fugitive",
+        "convicted", "conviction", "found guilty", "guilty plea", "plea deal",
+        "sentenced", "prison sentence", "jail term", "custodial sentence",
+        "acquitted", "charges dropped",
+        # Financial crime types
+        "fraud", "wire fraud", "bank fraud", "mail fraud", "insurance fraud",
+        "tax fraud", "tax evasion", "tax avoidance scheme",
+        "money laundering", "aml violation", "structuring", "smurfing",
+        "layering", "placement", "integration stage",
+        "bribery", "corruption", "kickbacks", "embezzlement", "misappropriation",
+        "market manipulation", "insider trading", "front running",
+        "ponzi scheme", "pyramid scheme", "pump and dump",
+        "securities fraud", "accounting fraud", "falsified accounts",
+        "identity theft", "document forgery", "forged documents",
+        # Organised crime
+        "organised crime", "criminal syndicate", "cartel", "mafia",
+        "drug trafficking", "narcotics", "human trafficking",
+        "cybercrime", "ransomware attack", "crypto theft",
+        # Red notices / international
+        "interpol red notice", "red notice issued", "international warrant",
+        "cross-border investigation",
+    ]),
+
+    # -----------------------------------------------------------------------
+    # Tier 2 — High-risk structural flags (score 0.70–0.84)
+    # -----------------------------------------------------------------------
+
+    ("ENTITY_DISSOLVED", 0.80, [
+        # Dissolution
+        "dissolved", "dissolution", "voluntary dissolution", "struck off",
+        "deregistered", "deregistration", "removed from register",
+        "wound up", "winding up", "winding-up order",
+        "liquidated", "liquidation", "compulsory liquidation", "creditors liquidation",
+        "in administration", "administrator appointed", "administrative receiver",
+        "receivership", "receiver appointed",
+        # Insolvency
+        "bankrupt", "bankruptcy", "declared bankrupt", "bankruptcy filing",
+        "chapter 11", "chapter 7", "chapter 15", "insolvency proceedings",
+        "insolvent", "unable to pay debts", "debt moratorium",
+        "creditor protection", "debt restructuring", "schemes of arrangement",
+        # Operational closure
+        "shut down", "ceased operations", "operations suspended", "permanently closed",
+        "exit scam", "rug pull", "disappeared", "gone dark",
+    ]),
+
+    ("ADVERSE_REGULATORY", 0.75, [
+        # Investigations by regulator
+        "regulatory investigation", "regulatory probe", "regulatory action",
+        "under investigation", "formal inquiry", "supervisory review",
+        "regulatory scrutiny", "regulatory concern",
+        # Enforcement
+        "enforcement action", "enforcement order", "regulatory order",
+        "cease and desist", "stop order", "prohibition order",
+        "public censure", "public reprimand", "formal warning",
+        "consent order", "deferred prosecution agreement", "dpa",
+        "non-prosecution agreement", "npa",
+        # Licence actions
+        "license revoked", "licence revoked", "license suspended",
+        "licence suspended", "license cancelled", "authorisation withdrawn",
+        "registration cancelled", "de-authorised", "banned from operating",
+        "unregistered", "operating without license", "unlicensed",
+        # Fines and penalties
+        "fined", "fine imposed", "civil penalty", "financial penalty",
+        "disgorgement", "restitution order", "compensation order",
+        "record fine", "multimillion fine",
+        # Major regulators (global coverage)
+        "sec charges", "sec enforcement", "sec fraud charges",
+        "cftc action", "cftc enforcement", "cftc charges",
+        "finra", "finra sanction", "finra bar",
+        "fca action", "fca enforcement", "fca fine", "fca warning",
+        "pra action", "pra enforcement",
+        "bafin", "bafin warning", "bafin enforcement",
+        "finma", "finma enforcement", "finma investigation",
+        "mas enforcement", "mas action", "monetary authority of singapore",
+        "hkma enforcement", "hkma action",
+        "ecb enforcement", "ecb supervisory",
+        "doj", "department of justice", "doj charges",
+        "fbi investigation", "fbi raid",
+        "sfo investigation", "serious fraud office",
+        "suspicious activity report", "sar filed", "suspicious transaction",
+        "aml failure", "kyc failure", "compliance failure",
+    ]),
+
+    ("PEP_EXPOSURE", 0.72, [
+        # PEP definitions
+        "politically exposed person", "pep", "pep status", "pep screening",
+        "pep list", "senior political figure",
+        # Political roles
+        "government minister", "head of state", "prime minister",
+        "president", "cabinet minister", "senior official", "state official",
+        "diplomat", "ambassador", "consul general",
+        "member of parliament", "senator", "congressman",
+        "judge", "supreme court", "senior judiciary",
+        # Military / security
+        "general", "military commander", "senior military",
+        "intelligence official", "spy agency",
+        # State-owned enterprises
+        "state-owned enterprise", "soe", "government-controlled",
+        "sovereign wealth fund", "state entity",
+        # Family / associates
+        "pep associate", "close associate", "family member of pep",
+        "politically connected", "government ties", "state connections",
+        # Corruption context
+        "kleptocracy", "kleptocrat", "stolen assets", "asset recovery",
+        "unexplained wealth order", "uwo",
+    ]),
+
+    # -----------------------------------------------------------------------
+    # Tier 3 — Medium-risk structural changes (score 0.55–0.69)
+    # -----------------------------------------------------------------------
+
+    ("CEO_CHANGE", 0.68, [
+        # Departures
+        "ceo resign", "ceo resignation", "ceo steps down", "ceo departure",
+        "ceo fired", "ceo dismissed", "ceo terminated", "ceo ousted",
+        "ceo removed", "ceo replaced", "ceo leaves", "ceo exit",
+        "founder resign", "founder departure", "founder steps down",
+        "co-founder resign", "coo resign", "cfo resign", "cto resign",
+        "chairman resign", "board chair resign",
+        # New appointments
+        "new ceo", "ceo appointed", "interim ceo", "acting ceo",
+        "new management", "new leadership", "management change",
+        "leadership transition", "leadership overhaul",
+        # Negative context
+        "ceo arrested", "ceo charged", "ceo investigated",
+        "ceo suspended", "ceo placed on leave", "ceo under investigation",
+        "leadership crisis", "management crisis", "boardroom battle",
+        "boardroom coup", "management shake-up", "executive purge",
+        # Mass exodus
+        "mass resignation", "executive exodus", "leadership vacuum",
+        "key man risk", "key person departure",
+    ]),
+
+    ("OWNERSHIP_CHANGE", 0.60, [
+        # Mergers & acquisitions
+        "acquisition", "acquired by", "takeover", "hostile takeover",
+        "merger", "merged with", "consolidation",
+        "buyout", "leveraged buyout", "lbo", "management buyout", "mbo",
+        "private equity acquisition", "pe buyout",
+        # Shareholder changes
+        "new shareholder", "new major shareholder", "new investor",
+        "majority stake", "controlling stake", "significant stake",
+        "stake acquisition", "share purchase", "block trade",
+        "change of control", "control transfer", "ownership transfer",
+        # Beneficial ownership
+        "beneficial owner", "beneficial ownership change", "ubo change",
+        "ultimate beneficial owner", "new ubo", "hidden ownership",
+        "opaque ownership", "nominee director", "nominee shareholder",
+        "bearer shares", "undisclosed ownership",
+        # Specific structures
+        "special purpose vehicle", "spv", "holding company change",
+        "parent company change", "subsidiary transfer",
+        "cross-border acquisition", "foreign ownership",
+        "sovereign acquisition", "state acquisition",
+    ]),
+
+    ("JURISDICTION_CHANGE", 0.58, [
+        # Relocation signals
+        "relocated", "redomiciled", "domicile change",
+        "moved headquarters", "hq moved", "headquarters relocation",
+        "registered office change", "new registered address",
+        "re-incorporated", "reincorporated", "re-registered",
+        "jurisdiction change", "change of jurisdiction",
+        # High-risk jurisdictions (FATF grey/black list and common offshore)
+        "cayman islands", "british virgin islands", "bvi",
+        "panama", "panama papers", "pandora papers",
+        "bermuda", "bahamas", "turks and caicos",
+        "marshall islands", "vanuatu", "samoa",
+        "seychelles", "mauritius", "malta", "cyprus",
+        "liechtenstein", "monaco", "andorra",
+        "dubai", "uae", "ras al khaimah",
+        "delaware shell", "wyoming shell",
+        "luxembourg holding", "ireland holding",
+        "netherlands holding", "dutch holding",
+        # Shell / opacity signals
+        "tax haven", "offshore structure", "offshore entity",
+        "letterbox company", "brass plate company",
+        "shell company", "shelf company", "dormant entity",
+        "complex ownership structure", "opaque structure",
+        "layered ownership", "multi-jurisdictional",
+    ]),
+
+    ("CYBER_INCIDENT", 0.62, [
+        # Breaches
+        "data breach", "security breach", "cyber breach",
+        "hacked", "hack", "cyberattack", "cyber attack",
+        "ransomware", "ransomware attack", "ransomware demand",
+        "malware", "malware infection", "trojan", "spyware",
+        "phishing attack", "spear phishing", "whaling attack",
+        "social engineering attack",
+        # Crypto-specific theft
+        "crypto theft", "crypto hack", "exchange hack",
+        "hot wallet drained", "cold wallet compromised",
+        "private key stolen", "protocol exploit",
+        "smart contract exploit", "defi exploit", "bridge hack",
+        "flash loan attack", "rug pull", "exit scam",
+        # Nation-state / sophisticated actors
+        "lazarus group", "north korean hackers", "apt",
+        "advanced persistent threat", "state-sponsored hack",
+        "nation-state attack",
+        # Data / IP theft
+        "customer data stolen", "data leak", "data exposed",
+        "credentials leaked", "personal data breach",
+        "gdpr breach", "data protection violation",
+        # Operational disruption
+        "systems down", "outage", "service disruption",
+        "platform down", "trading halted", "withdrawal suspended",
+    ]),
+
+    # -----------------------------------------------------------------------
+    # Tier 4 — KYC drift signals (score 0.45–0.57)
+    # -----------------------------------------------------------------------
+
+    ("BUSINESS_MODEL_PIVOT", 0.52, [
+        # General pivot signals
+        "pivot", "pivoting to", "strategic pivot", "new direction",
+        "rebranding", "rebranded", "rebrand",
+        "renamed", "name change", "trading as", "formerly known as",
+        "new business line", "new product line", "new vertical",
+        "business model change", "business transformation",
+        "new strategy", "strategic shift", "strategic review",
+        "expanding into", "entering new market", "new market entry",
+        # Industry-specific pivots (high-risk direction changes)
+        "crypto", "cryptocurrency", "digital assets", "virtual assets",
+        "nft", "non-fungible token", "metaverse",
+        "defi", "decentralised finance", "decentralized finance",
+        "web3", "blockchain", "tokenisation", "tokenization",
+        "stablecoin", "algorithmic stablecoin",
+        "gambling", "online gambling", "igaming", "sports betting",
+        "cannabis", "marijuana", "cbd", "hemp",
+        "arms dealing", "weapons", "military hardware",
+        "adult content", "adult entertainment",
+        # Scale changes
+        "rapid expansion", "geographic expansion", "global expansion",
+        "aggressive growth", "hypergrowth",
+        "massive funding round", "unicorn valuation",
+    ]),
+
+    ("DORMANCY_BREAK", 0.55, [
+        # Sudden activity after dormancy
+        "dormant company", "previously dormant", "reactivated",
+        "suddenly active", "resumed operations", "recommenced trading",
+        "revived entity", "dormant account active",
+        "shell activated", "shelf company activated",
+        # Transaction pattern signals
+        "sudden large transfer", "unexplained transfer", "unusual transaction",
+        "transaction spike", "volume spike", "activity spike",
+        "high volume suddenly", "large cash deposit", "large wire transfer",
+        "structuring", "smurfing", "multiple small transfers",
+        "rapid movement of funds", "layering", "funds moved quickly",
+        "round-trip transaction", "circular payment", "back-to-back transfer",
+        # Behavioural anomaly
+        "inconsistent with profile", "unusual for customer",
+        "atypical transaction", "abnormal activity",
+        "behavioural anomaly", "pattern change",
+    ]),
+
+    ("STRUCTURAL_RISK", 0.48, [
+        # Legal form changes
+        "legal form change", "converted to", "converted from",
+        "gmbh to", "ag to", "llc to", "ltd to", "plc to",
+        "private to public", "public to private", "going private",
+        "delisted", "delisting", "voluntarily delisted",
+        "spac merger", "blank check company", "reverse merger",
+        "reverse takeover", "rto",
+        # Group restructuring
+        "group restructuring", "corporate restructuring",
+        "spin-off", "demerger", "carve-out", "divestiture",
+        "subsidiary sold", "business unit sold",
+        "intercompany transfer", "related party transaction",
+        "connected party", "related party",
+        # Opacity signals
+        "trust structure", "discretionary trust", "blind trust",
+        "foundation", "private foundation", "family office",
+        "multiple directorships", "cross-directorships",
+        "circular shareholding", "golden share",
+    ]),
+
+    # -----------------------------------------------------------------------
+    # Tier 5 — Adverse media and sentiment (score 0.28–0.44)
+    # -----------------------------------------------------------------------
+
+    ("ADVERSE_MEDIA", 0.44, [
+        # Investigations / scandals
+        "scandal", "major scandal", "corporate scandal",
+        "controversy", "embroiled in", "caught up in",
+        "alleged fraud", "fraud allegations", "fraud claims",
+        "corruption allegations", "corruption scandal",
+        "misconduct", "serious misconduct", "gross misconduct",
+        "whistleblower", "whistleblower claims", "leaked documents",
+        "cover-up", "concealment", "information withheld",
+        # Legal proceedings
+        "lawsuit", "class action", "class action lawsuit",
+        "legal action", "legal proceedings", "litigation",
+        "sued", "suing", "counter-suit",
+        "arbitration", "arbitration proceedings",
+        "court order", "injunction", "restraining order",
+        # Media pressure
+        "investigative report", "exposé", "undercover investigation",
+        "media investigation", "newspaper investigation",
+        "documentary investigation", "leaked files",
+        "panama papers", "pandora papers", "luanda leaks",
+        "finance uncovered", "money trail",
+        # Reputational
+        "reputational damage", "reputational risk",
+        "public backlash", "public outcry", "public pressure",
+        "ngo report", "transparency international",
+        "global witness", "global financial integrity",
+        "occrp", "organised crime and corruption reporting",
+    ]),
+
+    ("NEGATIVE_SENTIMENT", 0.28, [
+        # Financial stress
+        "collapse", "collapses", "collapsed", "collapsing",
+        "crisis", "in crisis", "financial crisis",
+        "failure", "failed", "fails",
+        "default", "defaulted", "debt default", "sovereign default",
+        "margin call", "margin calls", "forced selling",
+        "liquidity crisis", "liquidity crunch", "funding squeeze",
+        "cash flow problems", "running out of cash", "cash burn",
+        # Operational stress
+        "warning", "profit warning", "revenue warning",
+        "concern", "serious concern", "growing concern",
+        "trouble", "in trouble", "financial trouble",
+        "problem", "serious problem", "systemic problem",
+        "decline", "sharp decline", "steep decline",
+        "loss", "significant loss", "record loss",
+        "writedown", "write-off", "impairment",
+        "downgrade", "credit downgrade", "rating downgrade",
+        # Market signals
+        "share price crash", "stock crash", "market cap wipeout",
+        "sell-off", "investor flight", "capital flight",
+        "bank run", "deposit withdrawal", "withdrawal freeze",
+        "trading suspended", "trading halt",
+        # Workforce
+        "mass layoffs", "mass redundancies", "major job cuts",
+        "restructuring costs", "severance",
+    ]),
+]
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def load_kyc(company_id):
+    with KYC_FILE.open() as f:
+        db = json.load(f)
+    return next((c for c in db if c["company_id"] == company_id), None)
+
+
+def load_articles():
+    with ARTICLES_FILE.open() as f:
+        data = json.load(f)
+    return data.get("articles", [])
+
+
+def source_category(source_feed: str) -> str:
+    """Map feed URL to a category tag shown in the UI."""
+    feed = (source_feed or "").lower()
+    if any(x in feed for x in ["sanction", "ofac", "opensanctions"]):
+        return "sanctions"
+    if any(x in feed for x in ["gleif", "companies house", "opencorporates", "zefix", "registry"]):
+        return "registry"
+    if any(x in feed for x in ["crunchbase", "wellfound", "pitchbook", "funding", "startup"]):
+        return "funding"
+    if any(x in feed for x in ["whois", "domain", "securitytrails", "wayback"]):
+        return "domain"
+    return "news"
+
+
+def write_audit(entry: dict):
+    with AUDIT_LOG.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+# ---------------------------------------------------------------------------
+# 2. ENTITY FUZZY MATCH  — rapidfuzz vs KYC legal name + domain
+# ---------------------------------------------------------------------------
+
+def entity_fuzzy_score(article: dict, kyc: dict) -> float:
+    """Score how strongly the article's NER entities match the KYC company."""
+    targets = [
+        kyc["legal_name"],
+        kyc.get("domain", "").replace(".", " "),
+    ]
+    companies = article.get("companies", [])
+    if not companies:
+        return 0.0
+
+    best = 0.0
+    for entity in companies:
+        name = entity.get("name", "")
+        for target in targets:
+            ratio = fuzz.token_set_ratio(name, target) / 100.0
+            best = max(best, ratio)
+    return round(best, 4)
+
+
+# ---------------------------------------------------------------------------
+# 3. SANCTIONS EXACT LOOKUP  — OpenSanctions free API
+# ---------------------------------------------------------------------------
+
+def sanctions_lookup(legal_name: str, key_personnel: dict) -> tuple[bool, list[str]]:
+    """
+    Returns (is_sanctioned, matched_names).
+    Checks company name + all key personnel.
+    Free OpenSanctions API — no key required for basic queries.
+    Falls back gracefully on network error.
+    """
+    names_to_check = [legal_name] + list(key_personnel.values())
+    matched = []
+
+    for name in names_to_check:
+        try:
+            resp = requests.post(
+                OPENSANCTIONS_API,
+                json={"queries": {"q": {"schema": "Thing", "properties": {"name": [name]}}}},
+                timeout=8,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get("responses", {}).get("q", {}).get("results", [])
+                if results and results[0].get("score", 0) > 0.7:
+                    matched.append(name)
+        except requests.RequestException:
+            pass  # network failure — don't block scoring
+
+    return bool(matched), matched
+
+
+# ---------------------------------------------------------------------------
+# 4. EMBEDDING COSINE SIMILARITY  — sentence-transformers (local, free)
+# ---------------------------------------------------------------------------
+
+_embedding_model = None
+
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        from sentence_transformers import SentenceTransformer
+        print("Loading embedding model (all-MiniLM-L6-v2) ...")
+        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _embedding_model
+
+
+def embedding_drift_score(article_text: str, baseline_business_model: str, use_embeddings: bool) -> float:
+    """
+    Cosine DISTANCE between article text and KYC baseline business model.
+    High distance = content is far from what was expected = KYC drift signal.
+    Returns a score 0.0-1.0 where higher = more drift.
+    """
+    if not use_embeddings or not article_text or not baseline_business_model:
+        return 0.0
+    try:
+        import numpy as np
+        model = get_embedding_model()
+        vecs = model.encode([article_text[:512], baseline_business_model], normalize_embeddings=True)
+        cosine_sim = float(np.dot(vecs[0], vecs[1]))
+        # Convert similarity → drift: high similarity = low drift
+        drift = round((1.0 - cosine_sim) / 2.0, 4)  # map [-1,1] → [0,1]
+        return drift
+    except Exception:
+        return 0.0
+
+
+# ---------------------------------------------------------------------------
+# 5. RULE-BASED DELTA  — CEO name, jurisdiction, legal form
+# ---------------------------------------------------------------------------
+
+def rule_based_delta(text: str, title: str, kyc: dict) -> tuple[bool, list[str]]:
+    """
+    Check if KYC-specific fields appear in anomalous context.
+    Returns (delta_detected, list_of_reasons).
+    """
+    content = (title + " " + text).lower()
+    reasons = []
+
+    # CEO / key personnel name mentioned with negative verbs
+    negative_verbs = ["arrested", "charged", "resign", "fired", "fled", "convicted", "indicted"]
+    for role, name in kyc.get("key_personnel", {}).items():
+        name_lower = name.lower()
+        if name_lower in content:
+            for verb in negative_verbs:
+                if verb in content:
+                    reasons.append(f"{role} '{name}' mentioned with '{verb}'")
+                    break
+
+    # Legal name change signals
+    legal_name = kyc["legal_name"].lower()
+    if "formerly known as" in content or "renamed" in content or "rebranded" in content:
+        if any(part in content for part in legal_name.split()[:2]):
+            reasons.append("Entity rename signal near company name")
+
+    # Domain in article (check for domain change signals)
+    domain = kyc.get("domain", "")
+    if domain and domain.lower() in content:
+        if any(w in content for w in ["redirect", "suspended", "seized", "taken down", "new domain"]):
+            reasons.append(f"Domain '{domain}' mentioned with change signal")
+
+    # Jurisdiction / legal form change
+    jurisdiction_signals = ["moved to", "relocated to", "redomiciled", "now based in",
+                            "offshore", "cayman", "bvi", "malta", "seychelles"]
+    for signal in jurisdiction_signals:
+        if signal in content:
+            reasons.append(f"Jurisdiction change indicator: '{signal}'")
+            break
+
+    return bool(reasons), reasons
+
+
+# ---------------------------------------------------------------------------
+# COMBINED SCORER
+# ---------------------------------------------------------------------------
+
+def score_article(article: dict, kyc: dict, use_embeddings: bool) -> dict:
+    text = article.get("clean_text", "")
+    title = article.get("title", "")
+    content_lower = (title + " " + text).lower()
+
+    # --- Component 1: keyword match ---
+    kw_score = 0.0
+    primary_signal = "NEGATIVE_SENTIMENT"
+    matched_keywords = []
+    for signal_type, base_score, keywords in RISK_LEXICON:
+        hits = [kw for kw in keywords if kw in content_lower]
+        if hits:
+            matched_keywords.extend(hits)
+            if kw_score == 0.0:
+                primary_signal = signal_type
+            kw_score = min(1.0, kw_score + base_score * (0.4 if kw_score > 0 else 1.0))
+
+    # --- Component 2: entity fuzzy match ---
+    fuzzy_score = entity_fuzzy_score(article, kyc)
+
+    # --- Component 4: embedding cosine drift ---
+    drift_score = embedding_drift_score(text, kyc["kyc_baseline"]["expected_business_model"], use_embeddings)
+
+    # --- Component 5: rule-based delta ---
+    delta_detected, delta_reasons = rule_based_delta(text, title, kyc)
+    delta_boost = 0.20 if delta_detected else 0.0
+
+    # --- Combined score (weighted) ---
+    # Keyword is primary signal; embeddings and rules add nuance
+    combined = (
+        kw_score       * 0.45 +
+        fuzzy_score    * 0.15 +
+        drift_score    * 0.20 +
+        delta_boost    * 0.20
+    )
+    combined = round(min(1.0, combined), 4)
+
+    return {
+        "risk_score": combined,
+        "signal_type": primary_signal,
+        "category": source_category(article.get("source_feed", "")),
+        "delta_flag": delta_detected,
+        "delta_reasons": delta_reasons,
+        "matched_keywords": list(set(matched_keywords))[:10],
+        "entity_fuzzy_score": fuzzy_score,
+        "embedding_drift_score": drift_score,
+        "keyword_score": round(kw_score, 4),
+        "escalate_to_stage2": combined >= ESCALATION_THRESHOLD,
+    }
+
+
+# ---------------------------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--company-id", required=True, help="e.g. CUST-002")
+    parser.add_argument("--no-embeddings", action="store_true", help="Skip sentence-transformer step (faster)")
+    args = parser.parse_args()
+    use_embeddings = not args.no_embeddings
+
+    kyc = load_kyc(args.company_id)
+    if not kyc:
+        print(f"Company {args.company_id} not found in KYC database.")
+        return
+
+    articles = load_articles()
+    print(f"Loaded {len(articles)} articles for {kyc['legal_name']} ({args.company_id})")
+
+    # --- Component 3: sanctions lookup (once per company, not per article) ---
+    print("Checking OpenSanctions ...")
+    t0 = time.time()
+    is_sanctioned, sanction_matches = sanctions_lookup(kyc["legal_name"], kyc.get("key_personnel", {}))
+    sanctions_ms = int((time.time() - t0) * 1000)
+    if is_sanctioned:
+        print(f"  ⚠  SANCTIONS HIT: {sanction_matches}")
+    else:
+        print(f"  ✓  No sanctions match ({sanctions_ms}ms)")
+
+    if use_embeddings:
+        get_embedding_model()  # load once before loop
+
+    results = []
+    escalated = 0
+    total_cost = 0.0
+
+    for article in articles:
+        scored = score_article(article, kyc, use_embeddings)
+
+        # Sanctions hit overrides everything
+        if is_sanctioned:
+            scored["risk_score"] = max(scored["risk_score"], 0.90)
+            scored["signal_type"] = "SANCTIONS_HIT"
+            scored["escalate_to_stage2"] = True
+            scored["sanctions_matches"] = sanction_matches
+
+        if scored["escalate_to_stage2"]:
+            escalated += 1
+
+        entry = {
+            # identity
+            "company_id": args.company_id,
+            "legal_name": kyc["legal_name"],
+            # article
+            "title": article["title"],
+            "url": article["url"],
+            "published_at": article["published_at"],
+            "summary": article.get("summary", ""),
+            "source_feed": article.get("source_feed", ""),
+            # scoring
+            **scored,
+            # cost tracking
+            "stage": 1,
+            "cost_usd": 0.0,
+            "scored_at": datetime.now(timezone.utc).isoformat(),
+        }
+        results.append(entry)
+        write_audit(entry)  # always log, regardless of score
+
+    results.sort(key=lambda x: (not x["escalate_to_stage2"], -x["risk_score"]))
+
+    output = {
+        "company_id": args.company_id,
+        "legal_name": kyc["legal_name"],
+        "kyc_baseline": kyc["kyc_baseline"],
+        "sanctions_hit": is_sanctioned,
+        "sanctions_matches": sanction_matches,
+        "total_articles": len(results),
+        "escalated_to_stage2": escalated,
+        "stage1_cost_usd": 0.0,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "articles": results,
+    }
+
+    with OUTPUT_FILE.open("w") as f:
+        json.dump(output, f, indent=2)
+
+    print(f"\n{'─'*60}")
+    print(f"Company:          {kyc['legal_name']} ({args.company_id})")
+    print(f"Sanctions hit:    {'YES ⚠' if is_sanctioned else 'No'}")
+    print(f"Articles scored:  {len(results)}")
+    print(f"→ Stage 2:        {escalated} escalated")
+    print(f"Stage 1 cost:     $0.00")
+    print(f"Output:           {OUTPUT_FILE.name}")
+    print(f"Audit log:        {AUDIT_LOG.name}")
+
+    top = [x for x in results if x["escalate_to_stage2"]][:5]
+    if top:
+        print(f"\nTop escalated signals:")
+        for r in top:
+            delta = " + DELTA" if r["delta_flag"] else ""
+            print(f"  [{r['risk_score']:.2f}] {r['signal_type']:<25} {r['title'][:65]}{delta}")
+
+
+if __name__ == "__main__":
+    main()
