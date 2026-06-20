@@ -3,6 +3,7 @@ import type { Alert, AuditEntry } from "./types";
 import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
 import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
 import { ClustersView } from "./clusters/ClustersView";
+import { SourcesView } from "./sources/SourcesView";
 import aminaLogo from "../assets/AminaBank_logo.png";
 
 const RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -15,7 +16,7 @@ export function App() {
   const [decided, setDecided] = useState<Record<string, string>>({});
   const [signalDecisions, setSignalDecisions] = useState<Record<string, string>>({});
   const [signalNotes, setSignalNotes] = useState<Record<string, string>>({});
-  const [view, setView] = useState<"queue" | "audit" | "clusters">("queue");
+  const [view, setView] = useState<"queue" | "audit" | "clusters" | "sources">("queue");
   const [source, setSource] = useState<DataSource>("demo");
 
   useEffect(() => {
@@ -102,10 +103,13 @@ export function App() {
         <button className={view === "clusters" ? "tab tab-on" : "tab"} onClick={() => setView("clusters")}>
           Clusters
         </button>
+        <button className={view === "sources" ? "tab tab-on" : "tab"} onClick={() => setView("sources")}>
+          Sources
+        </button>
         <button className={view === "audit" ? "tab tab-on" : "tab"} onClick={() => setView("audit")}>
           Audit Log {audit.length ? `(${audit.length})` : ""}
         </button>
-        {view !== "clusters" && (
+        {view !== "clusters" && view !== "sources" && (
           <div className="source-toggle">
             <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
               Demo cases
@@ -119,7 +123,9 @@ export function App() {
 
       {view === "clusters" && <ClustersView />}
 
-      {loading && view !== "clusters" && <div className="empty">Loading…</div>}
+      {view === "sources" && <SourcesView />}
+
+      {loading && view !== "clusters" && view !== "sources" && <div className="empty">Loading…</div>}
 
       {!loading && view === "queue" && !current && (
         <Queue alerts={alerts} decided={decided} onOpen={setSelected} />

@@ -9,6 +9,7 @@ import {
   type Simulation,
 } from "d3-force";
 import {
+  aggregateSentiment,
   buildGraph,
   categoryLabel,
   dimensionHue,
@@ -45,6 +46,28 @@ const DRIFT_RED = "#c0392b";
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
 
+// Heat-map fill: signed sentiment score in [-1, +1] → red (negative news) /
+// grey (neutral / no data) / green (positive news), intensity scaled by magnitude.
+function heatFill(score?: number): string {
+  if (score == null) return "hsl(40 5% 76%)"; // no sentiment data → grey
+  const s = Math.max(-1, Math.min(1, score));
+  if (s <= -0.05) {
+    const t = Math.min(1, -s);
+    return `hsl(6 ${lerp(22, 70, t)}% ${lerp(70, 46, t)}%)`;
+  }
+  if (s >= 0.05) {
+    const t = Math.min(1, s);
+    return `hsl(142 ${lerp(18, 52, t)}% ${lerp(66, 40, t)}%)`;
+  }
+  return "hsl(40 6% 72%)"; // neutral
+}
+// Mean entity-sentiment score for a category bubble (its member leaves).
+function categoryScore(members: LeafNode[]): number | undefined {
+  const vals = members.map((m) => m.sentiment?.score).filter((v): v is number => v != null);
+  if (!vals.length) return undefined;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
 type Selection =
   | { kind: "hub"; node: HubNode }
   | { kind: "category"; node: CategoryNode }
@@ -76,6 +99,7 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
   const [query, setQuery] = useState("");
   const [activeDims, setActiveDims] = useState<Set<string>>(new Set(graph.dimensions));
   const [showLeaves, setShowLeaves] = useState(true);
+  const [heatmap, setHeatmap] = useState(false); // recolor nodes by news sentiment
 
   // ---- interaction ----
   const [hoverCompany, setHoverCompany] = useState<string | null>(null);
@@ -457,6 +481,8 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
         setActiveDims={setActiveDims}
         showLeaves={showLeaves}
         setShowLeaves={setShowLeaves}
+        heatmap={heatmap}
+        setHeatmap={setHeatmap}
         hubCount={graph.hubs.length}
         leafCount={graph.leaves.length}
       />
@@ -554,6 +580,9 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
                 const dimmed = dimNode(n);
                 const isSel = selectedId === c.id;
                 const catDrift = hubById.get(c.companyId)?.registryDrift;
+                const catFill = heatmap
+                  ? heatFill(categoryScore(membersByCategory.get(c.id) ?? []))
+                  : categoryFill(c.hue);
                 return (
                   <g key={c.id}
                     style={{ transform: `translate(${c.x}px,${c.y}px)` }}
@@ -562,7 +591,7 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
                     onMouseEnter={() => setHoverCompany(c.companyId)}
                     onMouseLeave={() => setHoverCompany(null)}
                     onClick={(ev) => { ev.stopPropagation(); setSelection({ kind: "category", node: c }); focusCluster(c.companyId); }}>
-                    <circle r={c.r} fill={categoryFill(c.hue)}
+                    <circle r={c.r} fill={catFill}
                       stroke={isSel ? hubFill(c.hue) : catDrift ? DRIFT_RED : clusterEdge(c.hue)} strokeWidth={isSel ? 2.5 : catDrift ? 2 : 1.5} />
                     <g transform={`translate(${(c.r ?? 16) * 0.72},${-(c.r ?? 16) * 0.72})`}>
                       <circle r={8} fill={hubFill(c.hue)} />
@@ -594,7 +623,7 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
                     onMouseLeave={() => { setHoverCompany(null); setHoverNodeId(null); }}
                     onClick={(ev) => { ev.stopPropagation(); setSelection({ kind: "leaf", node: l }); focusCluster(l.companyId); }}>
                     <circle r={l.r}
-                      fill={sanc ? DANGER[sanc.tier] : isSubHub ? subHubFill(l.hue) : leafFill(l.hue)}
+                      fill={heatmap ? heatFill(l.sentiment?.score) : sanc ? DANGER[sanc.tier] : isSubHub ? subHubFill(l.hue) : leafFill(l.hue)}
                       stroke={sanc ? DANGER[sanc.tier] : isSel ? hubFill(l.hue) : leafDrift ? DRIFT_RED : "none"}
                       strokeWidth={isSel ? 2.5 : sanc ? 1.5 : leafDrift ? 1.3 : 0} />
                     {l.count > 1 && (
@@ -635,7 +664,8 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
                     onMouseEnter={() => setHoverCompany(h.companyId)}
                     onMouseLeave={() => setHoverCompany(null)}
                     onClick={(ev) => { ev.stopPropagation(); setSelection({ kind: "hub", node: h }); focusCluster(h.companyId); }}>
-                    <circle r={h.r} fill={drift ? DRIFT_RED : hubFill(h.hue)}
+                    <circle r={h.r}
+                      fill={heatmap ? heatFill(h.sentiment?.score ?? aggregateSentiment(h.articles)?.score) : drift ? DRIFT_RED : hubFill(h.hue)}
                       stroke={isSel ? "#241F18" : drift ? "#7a2015" : "none"} strokeWidth={isSel ? 2.5 : drift ? 2 : 0} />
                     {drift && (
                       <text className="cl-hub-drift-tag" textAnchor="middle" dy={-(h.r ?? 20) - 8}>⚠ DRIFT</text>
@@ -666,6 +696,16 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
             <button title="Zoom out" onClick={() => zoomBy(1 / 1.4)}>−</button>
             <button title="Reset view" className="cl-zoom-reset" onClick={resetView}>⤢</button>
           </div>
+
+          {/* sentiment heat-map legend */}
+          {heatmap && (
+            <div className="cl-heat-legend">
+              <div className="cl-heat-title">News sentiment</div>
+              <div className="cl-heat-row"><span className="cl-heat-dot" style={{ background: heatFill(-1) }} /> Negative</div>
+              <div className="cl-heat-row"><span className="cl-heat-dot" style={{ background: heatFill(0) }} /> Neutral</div>
+              <div className="cl-heat-row"><span className="cl-heat-dot" style={{ background: heatFill(1) }} /> Positive</div>
+            </div>
+          )}
         </div>
 
         <DetailPanel
@@ -683,11 +723,13 @@ function ClustersInner({ graph }: { graph: NonNullable<ReturnType<typeof buildGr
 
 // ----------------------------------------------------------------------------
 function ControlBar({
-  query, setQuery, dims, activeDims, setActiveDims, showLeaves, setShowLeaves, hubCount, leafCount,
+  query, setQuery, dims, activeDims, setActiveDims, showLeaves, setShowLeaves,
+  heatmap, setHeatmap, hubCount, leafCount,
 }: {
   query: string; setQuery: (v: string) => void;
   dims: string[]; activeDims: Set<string>; setActiveDims: (s: Set<string>) => void;
   showLeaves: boolean; setShowLeaves: (v: boolean) => void;
+  heatmap: boolean; setHeatmap: (v: boolean) => void;
   hubCount: number; leafCount: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -731,6 +773,11 @@ function ControlBar({
       <label className="cl-toggle">
         <input type="checkbox" checked={showLeaves} onChange={(e) => setShowLeaves(e.target.checked)} />
         Show entities
+      </label>
+
+      <label className="cl-toggle">
+        <input type="checkbox" checked={heatmap} onChange={(e) => setHeatmap(e.target.checked)} />
+        Sentiment heat map
       </label>
 
       <div className="cl-stat">{hubCount} companies · {leafCount} entities</div>
@@ -891,6 +938,14 @@ function HubPanel({ hub }: { hub: HubNode }) {
         {hub.keptCount} kept<span className="cl-sep">|</span>
         {hub.articlesScreened} screened
       </div>
+      {hub.sentiment && hub.sentiment.label !== "no_data" && (
+        <div className="cl-sent-summary">
+          <SentChip label={hub.sentiment.label} score={hub.sentiment.score} />
+          <span className="cl-sent-detail">
+            {hub.sentiment.distribution.adverse} adverse · {hub.sentiment.distribution.neutral} neutral · {hub.sentiment.distribution.benign} benign
+          </span>
+        </div>
+      )}
       {hub.registryDrift && (
         <div className="cl-sanction cl-sanction-confirmed">
           <div className="cl-sanction-head">⚠ Registry drift detected</div>
@@ -928,6 +983,12 @@ function LeafPanel({
       <h2 className="cl-panel-title">
         {leaf.name} <span className="cl-count-tag">({leaf.count} article{leaf.count === 1 ? "" : "s"})</span>
       </h2>
+      {leaf.sentiment && (
+        <div className="cl-sent-summary">
+          <SentChip label={leaf.sentiment.label} score={leaf.sentiment.score} />
+          <span className="cl-sent-detail">aggregate news sentiment</span>
+        </div>
+      )}
       {leaf.sanction && (
         <div className={`cl-sanction cl-sanction-${leaf.sanction.tier}`}>
           <div className="cl-sanction-head">
@@ -983,6 +1044,12 @@ function ArticleRow({ a }: { a: ArticleRef }) {
       </div>
       <div className="cl-article-meta">
         <DimTag dim={a.dimension} small />
+        {a.sentiment && (
+          <>
+            <span className="cl-sep">|</span>
+            <SentChip label={a.sentiment.label} />
+          </>
+        )}
         <span className="cl-sep">|</span>
         <span className="cl-source">{a.source}</span>
         <span className="cl-sep">|</span>
@@ -1002,6 +1069,25 @@ function ArticleRow({ a }: { a: ArticleRef }) {
         </>
       )}
     </article>
+  );
+}
+
+function sentPolarity(label: string): "neg" | "neu" | "pos" {
+  if (label === "adverse" || label === "negative") return "neg";
+  if (label === "benign" || label === "positive") return "pos";
+  return "neu";
+}
+
+// A small red/grey/green sentiment pill used in the detail panel and article rows.
+function SentChip({ label, score }: { label?: string; score?: number }) {
+  if (!label) return null;
+  const p = sentPolarity(label);
+  const txt = p === "neg" ? "Negative" : p === "pos" ? "Positive" : "Neutral";
+  return (
+    <span className={`cl-senttag cl-sent-${p}`}>
+      {txt}
+      {score != null && <span className="cl-senttag-num">{score >= 0 ? "+" : ""}{score.toFixed(2)}</span>}
+    </span>
   );
 }
 
