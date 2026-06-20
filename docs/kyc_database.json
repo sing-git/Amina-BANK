@@ -4,6 +4,8 @@
     "legal_name": "The Boeing Company",
     "domain": "boeing.com",
     "legal_form": "General Corporation (Publicly Traded)",
+    "jurisdiction": "US",
+    "company_status": "Active",
     "ownership": "Widely held public company (Institutional investors: Vanguard, BlackRock, etc.)",
     "kyc_baseline": {
       "expected_business_model": "Design and manufacturing of commercial airplanes and aerospace systems",
@@ -20,6 +22,8 @@
     "legal_name": "Terraform Labs",
     "domain": "terra.money",
     "legal_form": "Private Limited Company (Pte. Ltd.)",
+    "jurisdiction": "Singapore",
+    "company_status": "Active",
     "ownership": "Privately held (Major shareholders: Do Kwon, Daniel Shin)",
     "kyc_baseline": {
       "expected_business_model": "Development of blockchain software and decentralized finance (DeFi) protocols",
@@ -28,7 +32,7 @@
     },
     "key_personnel": {
       "CEO": "Do Kwon",
-      "CTO": "Nicholas Platias"
+      "CFO": "Nicholas Platias"
     }
   },
   {
@@ -36,6 +40,8 @@
     "legal_name": "Revolut Ltd",
     "domain": "revolut.com",
     "legal_form": "Private Limited Company (Ltd)",
+    "jurisdiction": "UK",
+    "company_status": "Active",
     "ownership": "Wholly owned by Revolut Group Holdings Ltd (Backed by Nikolay Storonsky, SoftBank, Tiger Global)",
     "kyc_baseline": {
       "expected_business_model": "Mobile e-wallet application and prepaid travel payment card",
@@ -44,7 +50,7 @@
     },
     "key_personnel": {
       "CEO": "Nikolay Storonsky",
-      "CTO": "Vlad Yatsenko"
+      "CFO": "Vlad Yatsenko"
     }
   },
   {
@@ -52,6 +58,8 @@
     "legal_name": "Pfizer Inc.",
     "domain": "pfizer.com",
     "legal_form": "General Corporation (Publicly Traded)",
+    "jurisdiction": "US",
+    "company_status": "Active",
     "ownership": "Widely held public company (Institutional investors: Vanguard, State Street, BlackRock)",
     "kyc_baseline": {
       "expected_business_model": "Research, development, and manufacturing of global biopharmaceutical products",
@@ -60,7 +68,7 @@
     },
     "key_personnel": {
       "CEO": "Albert Bourla",
-      "CSO": "Mikael Dolsten"
+      "CFO": "Mikael Dolsten"
     }
   }
 ]
