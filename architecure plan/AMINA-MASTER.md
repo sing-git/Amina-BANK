@@ -28,12 +28,12 @@ compliance officer approves/rejects every decision; everything is logged for aud
 ## 1. End-to-end data flow / 전체 데이터 흐름
 
 ```
-┌──────────── LAYER 1: public signals (Python, scrapers/) ────────────┐
-│  news-feed (Giulio)        corporate (Alice)       sanctions (Kiara) │
-│  RSS→NER→gemma3:4b 필터     등기 비교                OFAC/UN fuzzy      │
-│  → kyc_drift_signals.json   → 관할/법인형태 변경      → 이름 매칭        │
-└───────┬──────────────────────────┬──────────────────────┬────────────┘
-        ▼ (24h → Postgres)          ▼                      ▼
+┌──────────── LAYER 1: public signals (Python, scrapers/) ────────────-----------------------
+│  news-feed (Giulio)        corporate (Alice)       sanctions (Kiara) │       domain (Maiya) │ 
+│  RSS→NER→gemma3:4b 필터     등기 비교                OFAC/UN fuzzy      │                      │ 
+│  → kyc_drift_signals.json   → 관할/법인형태 변경      → 이름 매칭        │                         │ 
+└───────┬──────────────────────────┬──────────────────────┬────────────-----------------------
+        ▼ (24h → Postgres)          ▼                      
    newsAdapter ──┐   kycAdapter ──┐    sanctionsAdapter ──┐ (TS, backend/src/ingest/)
         RawSignal[] │  ClientBaseline │   {matched,entity}  │
                     ▼                ▼                      ▼
@@ -392,6 +392,7 @@ not by tangling code. **KR.** 각 스크래퍼가 공통 형식으로만 내보�
 | Giulio (news) | kyc_drift_signals.json (7 dims) | `RawSignal{sourceType:"news"}` |
 | Alice (registry) | jurisdiction/form change | `RawSignal{sourceType:"registry"}` |
 | You (tx/funding) | numeric | `RawSignal{sourceType:"transaction"/"funding_db"}` |
+| Maiya(domain)| 
 
 Folders: `scrapers/` (Python: news-feed, corporate, sanctions) · `data/` (kyc_database.json,
 sanctions_hits.json) · `backend/` (TS pipeline+API) · `frontend/` (dashboard).

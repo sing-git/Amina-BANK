@@ -16,10 +16,10 @@ def load_internal_database(filepath="docs/kyc_database.json"):
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             db = json.load(f)
-            print(f"✅ Succès : {len(db)} profils chargés depuis {filepath}.")
+            print(f"✅ Success : {len(db)} profiles loaded from {filepath}.")
             return db
     except FileNotFoundError:
-        print(f"❌ Erreur : '{filepath}' introuvable. Assure-toi qu'il est dans le même dossier.")
+        print(f"❌ Error : '{filepath}' Not found. Make sure it's in the same folder.")
         return []
 
 # ==========================================

@@ -5,6 +5,9 @@
 .env.*
 !**/.env.example
 
+swisshacks/
+pipeline/
+
 # node
 node_modules/
 dist/
