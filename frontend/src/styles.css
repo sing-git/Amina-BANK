@@ -42,13 +42,11 @@ body { margin: 0; }
 }
 .topbar-left { display: flex; align-items: center; min-width: 0; }
 .brand { text-align: center; }
+.brand-title-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.brand-sonar { height: 50px; width: 50px; flex: none; color: var(--txt); }
 .brand-name {
   margin: 0; font-size: 26px; font-weight: 600; letter-spacing: 0.06em;
   color: var(--txt); line-height: 1.1;
-}
-.brand-sub {
-  display: block; color: var(--muted); font-weight: 400; font-size: 12px;
-  letter-spacing: 0.04em; margin-top: 3px;
 }
 .topbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
 .brand-logo { height: 60px; width: auto; display: block; }
@@ -83,6 +81,24 @@ body { margin: 0; }
 
 .wrap { max-width: 980px; margin: 0 auto; padding: 26px 24px 56px; }
 .empty { text-align: center; color: var(--muted); padding: 60px; }
+
+/* Alert Queue: list fills the left half, detail the right half */
+.queue-split { display: flex; align-items: flex-start; gap: 0; }
+.queue-side {
+  flex: 1 1 50%; min-width: 0;
+  border-right: 1px solid var(--line-strong);
+  align-self: stretch;
+  position: sticky; top: 0;
+  max-height: calc(100vh - var(--header-h));
+  overflow-y: auto;
+  padding: 22px 20px;
+}
+.queue-main { flex: 1 1 50%; min-width: 0; }
+.queue-main .wrap { max-width: none; margin: 0; }
+
+/* selected row + drift marker in the left-half table */
+.queue tbody tr.qrow-on { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
+.qrow-drift { margin-left: 6px; }
 
 /* cost strip */
 .cost-strip {
