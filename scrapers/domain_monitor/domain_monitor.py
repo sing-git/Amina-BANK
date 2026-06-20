@@ -46,17 +46,6 @@ DOMAIN_SIGNAL_SCORES = {
 
 ESCALATION_THRESHOLD = 0.40
 
-# Co-firing signal patterns that indicate specific KYC drift types.
-# Composite score takes priority over individual signal max when higher.
-DRIFT_PATTERNS = [
-    ({"DOMAIN_EXPIRED",            "DOMAIN_UNREACHABLE"},           "SHUTDOWN",      0.92),
-    ({"DOMAIN_OWNER_CHANGE",       "DOMAIN_REGISTRAR_CHANGE"},      "ACQUISITION",   0.85),
-    ({"DOMAIN_RECENTLY_CREATED",   "DOMAIN_UNEXPECTED_REDIRECT"},   "SHELL_PIVOT",   0.82),
-    ({"DOMAIN_UNREACHABLE",        "DOMAIN_EXPIRY_SOON"},           "CLOSURE",       0.78),
-    ({"DOMAIN_REVIVAL",            "DOMAIN_DORMANCY_GAP"},          "REACTIVATION",  0.75),
-    ({"DOMAIN_NAMESERVER_CHANGE",  "DOMAIN_REGISTRAR_CHANGE"},      "MIGRATION",     0.70),
-]
-
 # Wayback: gap larger than this = dormancy signal
 DORMANCY_GAP_DAYS = 180
 
@@ -492,47 +481,6 @@ def run_wayback(company_id, legal_name, domain, run=True):
 
 
 # ---------------------------------------------------------------------------
-# KYC DRIFT AGGREGATION
-# ---------------------------------------------------------------------------
-
-def compute_company_drift(signals: list) -> dict:
-    """Aggregate all domain signals for one company into a composite KYC drift verdict.
-
-    Returns a dict with drift_score, drift_verdict, drift_pattern, drift_type
-    that gets embedded into every signal for the company before output.
-    """
-    if not signals:
-        return {"drift_score": 0.0, "drift_verdict": "CLEAN", "drift_pattern": [], "drift_type": "NONE"}
-
-    fired = {s["signal_type"] for s in signals}
-    individual_max = max(DOMAIN_SIGNAL_SCORES.get(t, 0.40) for t in fired)
-
-    # Check each pattern — take the highest-scoring match
-    best_boost = 0.0
-    best_type = ""
-    for pattern_set, drift_type, boost in DRIFT_PATTERNS:
-        if pattern_set.issubset(fired) and boost > best_boost:
-            best_boost = boost
-            best_type = drift_type
-
-    drift_score = round(max(individual_max, best_boost), 4)
-
-    if drift_score >= 0.75:
-        verdict = "ESCALATE"
-    elif drift_score >= 0.50:
-        verdict = "WATCH"
-    else:
-        verdict = "CLEAN"
-
-    return {
-        "drift_score":   drift_score,
-        "drift_verdict": verdict,
-        "drift_pattern": sorted(fired),
-        "drift_type":    best_type or "SINGLE_SIGNAL",
-    }
-
-
-# ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
 
@@ -555,13 +503,8 @@ def check_company(kyc: dict, run_wayback_flag: bool) -> list:
     all_signals += run_whois(company_id, legal_name, domain, kyc_baseline)
     all_signals += run_wayback(company_id, legal_name, domain, run=run_wayback_flag)
 
-    drift = compute_company_drift(all_signals)
-    for s in all_signals:
-        s.update(drift)
-
     escalated = [s for s in all_signals if s["escalate_to_stage2"]]
     print(f"\n  Signals found:   {len(all_signals)}")
-    print(f"  Drift verdict:   {drift['drift_verdict']} (score={drift['drift_score']:.2f}, type={drift['drift_type']})")
     print(f"  → Stage 2:       {len(escalated)} escalated")
     for s in escalated:
         print(f"    [{s['risk_score']:.2f}] {s['signal_type']:<30} {s['summary'][:60]}")

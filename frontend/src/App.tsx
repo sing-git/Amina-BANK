@@ -4,7 +4,9 @@ import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
 import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
 import { ClustersView } from "./clusters/ClustersView";
 import { SourcesView } from "./sources/SourcesView";
+import { KycView } from "./kyc/KycView";
 import aminaLogo from "../assets/AminaBank_logo.png";
+import { SonarLogo } from "./SonarLogo";
 
 const RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -16,7 +18,7 @@ export function App() {
   const [decided, setDecided] = useState<Record<string, string>>({});
   const [signalDecisions, setSignalDecisions] = useState<Record<string, string>>({});
   const [signalNotes, setSignalNotes] = useState<Record<string, string>>({});
-  const [view, setView] = useState<"queue" | "audit" | "clusters" | "sources">("queue");
+  const [view, setView] = useState<"queue" | "audit" | "clusters" | "sources" | "kyc">("queue");
   const [source, setSource] = useState<DataSource>("demo");
 
   useEffect(() => {
@@ -88,8 +90,10 @@ export function App() {
           <span className="advisory">ADVISORY ONLY — a human approves every decision</span>
         </div>
         <div className="brand">
-          <h1 className="brand-name">Risk Horizon</h1>
-          <span className="brand-sub">Dynamic KYC-Drift Monitoring</span>
+          <div className="brand-title-row">
+            <SonarLogo className="brand-sonar" />
+            <h1 className="brand-name">Risk Horizon</h1>
+          </div>
         </div>
         <div className="topbar-right">
           <img className="brand-logo" src={aminaLogo} alt="AMINA" />
@@ -106,10 +110,13 @@ export function App() {
         <button className={view === "sources" ? "tab tab-on" : "tab"} onClick={() => setView("sources")}>
           Sources
         </button>
+        <button className={view === "kyc" ? "tab tab-on" : "tab"} onClick={() => setView("kyc")}>
+          Onboarding
+        </button>
         <button className={view === "audit" ? "tab tab-on" : "tab"} onClick={() => setView("audit")}>
           Audit Log {audit.length ? `(${audit.length})` : ""}
         </button>
-        {view !== "clusters" && view !== "sources" && (
+        {view !== "clusters" && view !== "sources" && view !== "kyc" && (
           <div className="source-toggle">
             <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
               Demo cases
@@ -125,23 +132,34 @@ export function App() {
 
       {view === "sources" && <SourcesView />}
 
-      {loading && view !== "clusters" && view !== "sources" && <div className="empty">Loading…</div>}
+      {view === "kyc" && <KycView />}
 
-      {!loading && view === "queue" && !current && (
-        <Queue alerts={alerts} decided={decided} onOpen={setSelected} />
+      {loading && view !== "clusters" && view !== "sources" && view !== "kyc" && (
+        <div className="empty">Loading…</div>
       )}
 
-      {!loading && view === "queue" && current && (
-        <Detail
-          alert={current}
-          decided={decided[current.baseline.clientId]}
-          signalDecisions={signalDecisions}
-          signalNotes={signalNotes}
-          onSignalDecide={decideSignal}
-          onSignalNote={noteSignal}
-          onBack={() => setSelected(null)}
-          onDecide={decide}
-        />
+      {!loading && view === "queue" && (
+        <div className="queue-split">
+          <aside className="queue-side">
+            <Queue alerts={alerts} decided={decided} onOpen={setSelected} selectedId={selected} />
+          </aside>
+          <div className="queue-main">
+            {current ? (
+              <Detail
+                alert={current}
+                decided={decided[current.baseline.clientId]}
+                signalDecisions={signalDecisions}
+                signalNotes={signalNotes}
+                onSignalDecide={decideSignal}
+                onSignalNote={noteSignal}
+                onBack={() => setSelected(null)}
+                onDecide={decide}
+              />
+            ) : (
+              <div className="empty">Select a client to review</div>
+            )}
+          </div>
+        </div>
       )}
 
       {!loading && view === "audit" && <AuditView audit={audit} />}
@@ -153,64 +171,64 @@ function Queue({
   alerts,
   decided,
   onOpen,
+  selectedId,
 }: {
   alerts: Alert[];
   decided: Record<string, string>;
   onOpen: (id: string) => void;
+  selectedId: string | null;
 }) {
   return (
-    <main className="wrap">
-      <table className="queue">
-        <thead>
-          <tr>
-            <th>Client</th>
-            <th>Risk</th>
-            <th>Score</th>
-            <th>KYC drift</th>
-            <th>Top signal</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {alerts.map((a) => {
-            const top = a.composite.contributingSignals[0];
-            return (
-              <tr key={a.baseline.clientId} onClick={() => onOpen(a.baseline.clientId)}>
-                <td>
-                  <div className="client-name">{a.baseline.legalName}</div>
-                  <div className="client-sub">
-                    {a.baseline.jurisdiction} · {a.baseline.legalForm} <SyntheticChip />
-                  </div>
-                </td>
-                <td>
-                  <RiskPill flag={a.composite.riskFlag} />
-                </td>
-                <td style={{ minWidth: 120 }}>
-                  <ScoreMeter score={a.composite.compositeScore} />
-                </td>
-                <td className="drift">{driftArrow(a.baseline.riskRating, a.composite.riskFlag)}</td>
-                <td className="signal-cell">
-                  {a.composite.hardGateTriggered
-                    ? "Sanctions / PEP hit"
-                    : top
-                      ? humanize(top.category)
-                      : "—"}
-                </td>
-                <td>
-                  {decided[a.baseline.clientId] ? (
-                    <span className={`decided decided-${decided[a.baseline.clientId]}`}>
-                      {decided[a.baseline.clientId]}
-                    </span>
-                  ) : (
-                    <span className="open-link">review →</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </main>
+    <table className="queue">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Risk</th>
+          <th>Score</th>
+          <th>Flags</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {alerts.map((a) => {
+          const top = a.composite.contributingSignals[0];
+          const id = a.baseline.clientId;
+          const sel = id === selectedId;
+          const dec = decided[id];
+          return (
+            <tr key={id} className={sel ? "qrow-on" : ""} onClick={() => onOpen(id)}>
+              <td>
+                <div className="client-name">{a.baseline.legalName}</div>
+                <div className="client-sub">
+                  {a.baseline.jurisdiction} · {a.baseline.legalForm} <SyntheticChip />
+                  <span className="qrow-drift">{driftArrow(a.baseline.riskRating, a.composite.riskFlag)}</span>
+                </div>
+              </td>
+              <td>
+                <RiskPill flag={a.composite.riskFlag} />
+              </td>
+              <td style={{ minWidth: 110 }}>
+                <ScoreMeter score={a.composite.compositeScore} />
+              </td>
+              <td className="signal-cell">
+                {a.composite.hardGateTriggered
+                  ? "Sanctions / PEP hit"
+                  : top
+                    ? humanize(top.category)
+                    : "—"}
+              </td>
+              <td>
+                {dec ? (
+                  <span className={`decided decided-${dec}`}>{dec}</span>
+                ) : (
+                  <span className="open-link">{sel ? "viewing" : "review →"}</span>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 

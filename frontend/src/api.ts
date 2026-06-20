@@ -1,9 +1,11 @@
 import type { Alert, AuditEntry, Cost } from "./types";
 import { SEED_ALERTS, SEED_COST } from "./seed";
 import type { RawCompany, SanctionFlag, RegistryDriftEntry } from "./clusters/graph";
+import type { KycCompany } from "./kyc/KycView";
 import bundledDriftSignals from "./data/kyc_drift_signals.json";
 import bundledSanctionsFlags from "./data/kyc_sanctions_flags.json";
 import bundledRegistryDrift from "./data/kyc_drift_report.json";
+import bundledKycDatabase from "./data/kyc_database.json";
 
 // Calls the backend via the Vite proxy (/api → :8787). If the backend is
 // unreachable, transparently falls back to bundled seed data so the demo
@@ -91,6 +93,20 @@ export async function fetchRegistryDrift(): Promise<RegistryDriftEntry[]> {
     return data.report;
   } catch {
     return bundledRegistryDrift as RegistryDriftEntry[];
+  }
+}
+
+// KYC onboarding database (docs/kyc_database.json) for the Onboarding view.
+// Tries the backend, falls back to the bundled JSON so it renders offline.
+export async function fetchKycDatabase(): Promise<KycCompany[]> {
+  try {
+    const res = await fetch("/api/kyc-database");
+    if (!res.ok) throw new Error(String(res.status));
+    const data = (await res.json()) as { companies: KycCompany[] };
+    if (!Array.isArray(data.companies) || data.companies.length === 0) throw new Error("empty");
+    return data.companies;
+  } catch {
+    return bundledKycDatabase as unknown as KycCompany[];
   }
 }
 

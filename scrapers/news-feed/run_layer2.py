@@ -1,8 +1,7 @@
 """Run Layer 2 — keyword & NLP scoring on Layer 1 signals.
 
 Reads layer1_signals.json (produced by run_layer1.py) and runs
-keyword_scorer.py to score news signals. Domain signals are fully scored
-by domain_monitor.py and do not pass through this layer.
+keyword_scorer.py to score all news signals and pass through domain signals.
 
 Output: layer2_output.json
 
@@ -36,9 +35,8 @@ def main():
         return
 
     with INPUT_FILE.open() as f:
-        all_signals = json.load(f)
-    news_count = sum(1 for s in all_signals if s.get("category") == "news")
-    print(f"Layer 2 — scoring {news_count} news signals from layer1_signals.json")
+        total_input = len(json.load(f))
+    print(f"Layer 2 — scoring {total_input} signals from layer1_signals.json")
 
     cmd = ["keyword_scorer.py"]
     if args.no_embeddings:
@@ -58,7 +56,7 @@ def main():
 
     print(f"\n{'='*60}")
     print(f"Layer 2 complete")
-    print(f"News signals scored: {news_count}")
+    print(f"Signals scored:   {total_input}")
     print(f"Escalated:        {escalated}")
     print(f"Output:           layer2_output.json")
     print(f"{'='*60}")
