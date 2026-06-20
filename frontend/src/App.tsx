@@ -14,6 +14,7 @@ export function App() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [decided, setDecided] = useState<Record<string, string>>({});
   const [signalDecisions, setSignalDecisions] = useState<Record<string, string>>({});
+  const [signalNotes, setSignalNotes] = useState<Record<string, string>>({});
   const [view, setView] = useState<"queue" | "audit">("queue");
   const [source, setSource] = useState<DataSource>("demo");
 
@@ -63,6 +64,19 @@ export function App() {
     setSignalDecisions((d) => ({ ...d, [signalId]: action }));
   }
 
+  async function noteSignal(alert: Alert, signalId: string, category: string) {
+    const note = window.prompt("Add an analyst note for this signal:");
+    if (!note) return;
+    const { entry } = await postDecision({
+      clientId: alert.baseline.clientId,
+      actor: "demo-analyst",
+      action: "signal-note",
+      detail: `${category} [${signalId}]: ${note}`,
+    });
+    if (entry) setAudit((a) => [entry, ...a]);
+    setSignalNotes((n) => ({ ...n, [signalId]: note }));
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -106,7 +120,9 @@ export function App() {
           alert={current}
           decided={decided[current.baseline.clientId]}
           signalDecisions={signalDecisions}
+          signalNotes={signalNotes}
           onSignalDecide={decideSignal}
+          onSignalNote={noteSignal}
           onBack={() => setSelected(null)}
           onDecide={decide}
         />
@@ -202,14 +218,18 @@ function Detail({
   alert,
   decided,
   signalDecisions,
+  signalNotes,
   onSignalDecide,
+  onSignalNote,
   onBack,
   onDecide,
 }: {
   alert: Alert;
   decided?: string;
   signalDecisions: Record<string, string>;
+  signalNotes: Record<string, string>;
   onSignalDecide: (a: Alert, signalId: string, category: string, action: "validate" | "dismiss") => void;
+  onSignalNote: (a: Alert, signalId: string, category: string) => void;
   onBack: () => void;
   onDecide: (a: Alert, action: "approve" | "reject" | "escalate") => void;
 }) {
@@ -312,7 +332,11 @@ function Detail({
                     </button>
                   </>
                 )}
+                <button className="sig-btn sig-note" onClick={() => onSignalNote(alert, s.signalId, s.category)}>
+                  ✎ Note
+                </button>
               </div>
+              {signalNotes[s.signalId] && <div className="sig-note-text">📝 {signalNotes[s.signalId]}</div>}
             </div>
           ))}
         </section>

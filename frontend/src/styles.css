@@ -128,6 +128,8 @@ body { margin: 0; }
 .sig-decided { font-size: 11px; font-weight: 700; }
 .sig-validate.sig-decided, .sig-decided.sig-validate { color: #5cc285; }
 .sig-decided.sig-dismiss { color: #f06a66; }
+.sig-note { border-color: var(--line); color: #c9a84a; }
+.sig-note-text { margin-top: 6px; font-size: 12px; color: #d8c98a; background: #211d10; border: 1px solid #5a4a1e; border-radius: 4px; padding: 6px 10px; }
 
 .bars { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin: 10px 0; max-width: 420px; }
 .bars label { font-size: 11px; color: var(--muted); }
