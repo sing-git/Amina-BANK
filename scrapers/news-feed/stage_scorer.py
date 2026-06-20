@@ -26,7 +26,7 @@ import requests
 from rapidfuzz import fuzz
 
 BASE_DIR = Path(__file__).resolve().parent
-ARTICLES_FILE = BASE_DIR / "selected_articles.json"
+ARTICLES_FILE = BASE_DIR / "kyc.json"
 KYC_FILE = BASE_DIR.parent.parent / "docs" / "kyc_database.json"
 OUTPUT_FILE = BASE_DIR / "stage1_output.json"
 AUDIT_LOG = BASE_DIR / "audit_log.jsonl"
@@ -458,7 +458,7 @@ def load_articles_from_signals(company_id: str):
     """
     with SIGNALS_FILE.open() as f:
         data = json.load(f)
-    company = next((c for c in data if c["company_id"] == company_id), None)
+    company = next((c for c in data if c.get("company_id") == company_id), None)
     if not company:
         return []
     articles = []
@@ -758,6 +758,7 @@ def main():
             # identity
             "company_id": args.company_id,
             "legal_name": kyc["legal_name"],
+            "category": "news",
             # article
             "title": article["title"],
             "url": article["url"],
@@ -776,21 +777,17 @@ def main():
 
     results.sort(key=lambda x: (not x["escalate_to_stage2"], -x["risk_score"]))
 
-    output = {
-        "company_id": args.company_id,
-        "legal_name": kyc["legal_name"],
-        "kyc_baseline": kyc["kyc_baseline"],
-        "sanctions_hit": is_sanctioned,
-        "sanctions_matches": sanction_matches,
-        "total_articles": len(results),
-        "escalated_to_stage2": escalated,
-        "stage1_cost_usd": 0.0,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "articles": results,
-    }
-
+    # Append to shared flat list — domain_monitor does the same, run_stage1 clears on full runs
+    existing = []
+    if OUTPUT_FILE.exists():
+        try:
+            with OUTPUT_FILE.open() as f:
+                data = json.load(f)
+            existing = data if isinstance(data, list) else data.get("articles", [])
+        except Exception:
+            existing = []
     with OUTPUT_FILE.open("w") as f:
-        json.dump(output, f, indent=2)
+        json.dump(existing + results, f, indent=2)
 
     print(f"\n{'─'*60}")
     print(f"Company:          {kyc['legal_name']} ({args.company_id})")

@@ -16,6 +16,11 @@ BASE_DIR = Path(__file__).resolve().parent
 KYC_FILE = BASE_DIR.parent.parent / "docs" / "kyc_database.json"
 OUTPUT_FILE = BASE_DIR / "stage1_output.json"
 
+# Prefer the project venv if present, fall back to whatever python is running this
+_REPO_ROOT = BASE_DIR.parent.parent
+_VENV_PY = _REPO_ROOT / "swisshacks" / "bin" / "python3"
+PYTHON = str(_VENV_PY) if _VENV_PY.exists() else sys.executable
+
 
 def load_company_ids():
     with KYC_FILE.open() as f:
@@ -25,7 +30,7 @@ def load_company_ids():
 
 def run_one(label, cmd):
     print(f"\n{'─'*60}\n{label}\n{'─'*60}")
-    result = subprocess.run([sys.executable] + cmd, cwd=BASE_DIR)
+    result = subprocess.run([PYTHON] + cmd, cwd=BASE_DIR)
     if result.returncode != 0:
         print(f"  ⚠  {label} failed — continuing with next company.")
         return False

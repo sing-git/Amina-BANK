@@ -1,15 +1,12 @@
 """Domain and website monitoring for KYC drift detection.
 
-Checks five sources for domain-level signals that indicate structural change:
+Checks three sources for domain-level signals that indicate structural change:
 
-  1. WHOIS/ICANN      — registrar, owner, nameserver, expiry vs KYC baseline (free)
-  2. Wayback Machine  — snapshot history, dormancy gaps, domain revival (free)
-  3. SecurityTrails   — historical DNS records (requires SECURITYTRAILS_API_KEY)
-  4. Firecrawl        — current website content vs KYC baseline (requires FIRECRAWL_API_KEY)
-  5. Diffbot          — structured page extraction (requires DIFFBOT_TOKEN)
+  1. HTTP live check   — reachability, unexpected redirects (free)
+  2. WHOIS/ICANN       — registrar, owner, nameserver, expiry vs KYC baseline (free)
+  3. Wayback Machine   — snapshot history, dormancy gaps, domain revival (free)
 
-Free sources run always. API-gated sources are skipped unless the key is set in env.
-All signals are written to audit_log.jsonl and domain_signals.json.
+All signals are written to audit_log.jsonl and layer1_signals.json.
 
 Usage:
     python domain_monitor.py --company-id CUST-002
@@ -19,7 +16,6 @@ Usage:
 
 import argparse
 import json
-import os
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -28,7 +24,7 @@ import requests
 
 BASE_DIR = Path(__file__).resolve().parent
 KYC_FILE = BASE_DIR.parent.parent / "docs" / "kyc_database.json"
-OUTPUT_FILE = BASE_DIR / "stage1_output.json"
+OUTPUT_FILE = BASE_DIR / "layer1_signals.json"
 AUDIT_LOG = BASE_DIR / "audit_log.jsonl"
 
 # ---------------------------------------------------------------------------
@@ -43,8 +39,6 @@ DOMAIN_SIGNAL_SCORES = {
     "DOMAIN_NAMESERVER_CHANGE":  0.60,
     "DOMAIN_REVIVAL":            0.58,
     "DOMAIN_DORMANCY_GAP":       0.55,
-    "CONTENT_SIGNIFICANT_CHANGE":0.55,
-    "DNS_RECORD_CHANGE":         0.52,
     "DOMAIN_EXPIRY_SOON":        0.50,
     "DOMAIN_RECENTLY_CREATED":   0.48,
     "DOMAIN_NO_SNAPSHOTS":       0.40,
@@ -487,180 +481,6 @@ def run_wayback(company_id, legal_name, domain, run=True):
 
 
 # ---------------------------------------------------------------------------
-# 3. SECURITYTRAILS (historical DNS — requires API key)
-# ---------------------------------------------------------------------------
-
-def run_securitytrails(company_id, legal_name, domain):
-    signals = []
-    api_key = os.environ.get("SECURITYTRAILS_API_KEY")
-    if not api_key:
-        print(f"  [SecurityTrails] Skipped — set SECURITYTRAILS_API_KEY to enable")
-        return signals
-
-    print(f"  [SecurityTrails] Querying DNS history for {domain} ...")
-    headers = {"apikey": api_key, "Accept": "application/json"}
-
-    for record_type in ["A", "MX", "NS"]:
-        try:
-            resp = requests.get(
-                f"https://api.securitytrails.com/v1/history/{domain}/dns/{record_type.lower()}",
-                headers=headers,
-                timeout=10,
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                records = data.get("records", [])
-                if len(records) > 1:
-                    # Multiple historical records = DNS changed over time
-                    first = records[-1]
-                    latest = records[0]
-                    first_vals = set(v.get("ip", v.get("host", "")) for v in first.get("values", []))
-                    latest_vals = set(v.get("ip", v.get("host", "")) for v in latest.get("values", []))
-                    if first_vals != latest_vals:
-                        signals.append(make_signal(
-                            company_id, legal_name, domain,
-                            "DNS_RECORD_CHANGE",
-                            f"{record_type} records changed for {domain}: {first_vals} → {latest_vals}",
-                            {
-                                "record_type": record_type,
-                                "previous_values": list(first_vals),
-                                "current_values": list(latest_vals),
-                                "change_count": len(records),
-                            },
-                            source="securitytrails",
-                        ))
-            elif resp.status_code == 429:
-                print(f"  [SecurityTrails] Rate limited")
-                break
-        except Exception as e:
-            print(f"  [SecurityTrails] {record_type} query failed: {e}")
-
-    if not signals:
-        print(f"  [SecurityTrails] No DNS changes detected")
-    return signals
-
-
-# ---------------------------------------------------------------------------
-# 4. FIRECRAWL (website content vs KYC baseline — requires API key)
-# ---------------------------------------------------------------------------
-
-def run_firecrawl(company_id, legal_name, domain, kyc_baseline):
-    signals = []
-    api_key = os.environ.get("FIRECRAWL_API_KEY")
-    if not api_key:
-        print(f"  [Firecrawl] Skipped — set FIRECRAWL_API_KEY to enable")
-        return signals
-
-    print(f"  [Firecrawl] Scraping https://{domain} ...")
-    try:
-        resp = requests.post(
-            "https://api.firecrawl.dev/v1/scrape",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"url": f"https://{domain}", "formats": ["markdown"], "onlyMainContent": True},
-            timeout=30,
-        )
-        if resp.status_code != 200:
-            print(f"  [Firecrawl] HTTP {resp.status_code}")
-            return signals
-
-        content = resp.json().get("data", {}).get("markdown", "")
-        if not content:
-            return signals
-
-        # Compare current content against KYC baseline business model using keywords
-        baseline = kyc_baseline.get("expected_business_model", "").lower()
-        content_lower = content.lower()
-
-        baseline_keywords = set(baseline.split()) - {"and", "or", "the", "of", "in", "for", "a", "an"}
-        content_keywords = set(content_lower.split())
-
-        overlap = baseline_keywords & content_keywords
-        overlap_ratio = len(overlap) / max(len(baseline_keywords), 1)
-
-        print(f"  [Firecrawl] Content scraped ({len(content)} chars) | Baseline overlap: {overlap_ratio:.0%}")
-
-        if overlap_ratio < 0.25:
-            signals.append(make_signal(
-                company_id, legal_name, domain,
-                "CONTENT_SIGNIFICANT_CHANGE",
-                f"Website content for {domain} has low overlap ({overlap_ratio:.0%}) with KYC baseline business model",
-                {
-                    "baseline_overlap_ratio": round(overlap_ratio, 3),
-                    "baseline_keywords_matched": list(overlap)[:10],
-                    "content_length_chars": len(content),
-                },
-                source="firecrawl",
-            ))
-
-    except Exception as e:
-        print(f"  [Firecrawl] Failed: {e}")
-
-    if not signals:
-        print(f"  [Firecrawl] No significant content drift detected")
-    return signals
-
-
-# ---------------------------------------------------------------------------
-# 5. DIFFBOT (structured extraction — requires token)
-# ---------------------------------------------------------------------------
-
-def run_diffbot(company_id, legal_name, domain, kyc_baseline):
-    signals = []
-    token = os.environ.get("DIFFBOT_TOKEN")
-    if not token:
-        print(f"  [Diffbot] Skipped — set DIFFBOT_TOKEN to enable")
-        return signals
-
-    print(f"  [Diffbot] Extracting structured data from https://{domain} ...")
-    try:
-        resp = requests.get(
-            "https://api.diffbot.com/v3/analyze",
-            params={"url": f"https://{domain}", "token": token},
-            timeout=20,
-        )
-        if resp.status_code != 200:
-            print(f"  [Diffbot] HTTP {resp.status_code}")
-            return signals
-
-        data = resp.json()
-        objects = data.get("objects", [])
-        if not objects:
-            return signals
-
-        obj = objects[0]
-        extracted_type = obj.get("type", "")
-        extracted_text = obj.get("text", "") or obj.get("description", "")
-
-        baseline = kyc_baseline.get("expected_business_model", "").lower()
-        content_lower = extracted_text.lower()
-
-        baseline_keywords = set(baseline.split()) - {"and", "or", "the", "of", "in", "for", "a", "an"}
-        content_keywords = set(content_lower.split())
-        overlap_ratio = len(baseline_keywords & content_keywords) / max(len(baseline_keywords), 1)
-
-        print(f"  [Diffbot] Page type: {extracted_type} | Baseline overlap: {overlap_ratio:.0%}")
-
-        if overlap_ratio < 0.25:
-            signals.append(make_signal(
-                company_id, legal_name, domain,
-                "CONTENT_SIGNIFICANT_CHANGE",
-                f"Diffbot structured extraction for {domain} shows low baseline overlap ({overlap_ratio:.0%})",
-                {
-                    "page_type": extracted_type,
-                    "baseline_overlap_ratio": round(overlap_ratio, 3),
-                },
-                source="diffbot",
-            ))
-
-    except Exception as e:
-        print(f"  [Diffbot] Failed: {e}")
-
-    if not signals:
-        print(f"  [Diffbot] No significant content drift detected")
-    return signals
-
-
-# ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
 
@@ -682,9 +502,6 @@ def check_company(kyc: dict, run_wayback_flag: bool) -> list:
     all_signals += run_http_check(company_id, legal_name, domain, kyc_baseline)
     all_signals += run_whois(company_id, legal_name, domain, kyc_baseline)
     all_signals += run_wayback(company_id, legal_name, domain, run=run_wayback_flag)
-    all_signals += run_securitytrails(company_id, legal_name, domain)
-    all_signals += run_firecrawl(company_id, legal_name, domain, kyc_baseline)
-    all_signals += run_diffbot(company_id, legal_name, domain, kyc_baseline)
 
     escalated = [s for s in all_signals if s["escalate_to_stage2"]]
     print(f"\n  Signals found:   {len(all_signals)}")
@@ -717,7 +534,7 @@ def main():
         if len(companies) > 1:
             time.sleep(1)  # be polite to free APIs
 
-    # Merge with existing stage1_output.json (from stage_scorer.py) if present
+    # Append to shared layer1_signals.json (layer1_collector.py also writes here)
     existing = []
     if OUTPUT_FILE.exists():
         try:
