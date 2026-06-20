@@ -12,7 +12,8 @@
     "demo:live": "tsx src/liveDemo.ts",
     "generate": "tsx src/data/generators/generate.ts",
     "eval": "tsx src/eval/runEval.ts",
-    "db:init": "tsx src/dbInit.ts"
+    "db:init": "tsx src/dbInit.ts",
+    "demo:ingest": "tsx src/demoIngest.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
