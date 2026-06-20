@@ -286,7 +286,9 @@ fuzzy candidate (≥85) → check secondary identifiers (jurisdiction / LEI / ad
 ```
 **KR.** exact만 쓰면 변형 놓치고, fuzzy 자동차단은 동명이인 오탐. → fuzzy로 후보 찾고 **2차 식별자
 (관할·LEI·주소)로 대조**, 불일치/애매하면 자동 차단 대신 **사람 검토 큐**로. 임계값은 정책 파일에.
-*Status:* matcher (Kiara, fuzzy ≥85) wired to hard gate; two-tier + secondary-ID check = roadmap.
+*Status:* **two-tier implemented** — auto-CRITICAL at score ≥98, human review queue at 85–98
+(policy-driven `riskPolicy.sanctions`), with jurisdiction identifier check + a "review pending"
+banner in the dashboard. Kiara's matcher feeds it.
 
 ---
 

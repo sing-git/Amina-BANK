@@ -49,6 +49,12 @@
     "minMagnitude": 50
   },
 
+  "sanctions": {
+    "_doc": "two-tier name screening. score ≥ autoThreshold (and identifier match, if available) → auto CRITICAL. reviewThreshold ≤ score < autoThreshold → human review queue, NOT auto-blocked. < reviewThreshold → ignored. Avoids homonym false positives.",
+    "autoThreshold": 98,
+    "reviewThreshold": 85
+  },
+
   "riskArchetypes": {
     "_doc": "reference risk-pattern sentences (FATF/AML red flags). Incoming narrative is compared against each.",
     "high_leverage_crypto": "High-leverage crypto derivatives trading platform offering up to 100x leverage",

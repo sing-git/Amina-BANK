@@ -9,7 +9,7 @@ import type {
   SignalScore,
   TransactionRecord,
 } from "../types.js";
-import { checkSanctionsPEP } from "./hardGate.js";
+import { checkSanctionsPEP, type SanctionsReviewCandidate } from "./hardGate.js";
 import { checkFundingScale, runTransactionChecks } from "./ruleDiff.js";
 import { classifyRawSignal } from "./classifyRawSignal.js";
 import { POLICY } from "./policy.js";
@@ -24,6 +24,7 @@ export interface PipelineResult {
   deepAnalysis?: DeepAnalysisReport;
   evidenceBySignal: Record<string, Evidence[]>;
   stageTrace: string[]; // human-readable "what happened, in order" for the UI/audit
+  sanctionsReview?: { candidates: SanctionsReviewCandidate[]; note: string }; // 2-tier review queue
 }
 
 export async function runPipeline(
@@ -35,14 +36,29 @@ export async function runPipeline(
   const evidenceBySignal: Record<string, Evidence[]> = {};
 
   // ── Hard gate (sanctions/PEP) — short-circuits everything ──
-  const hardGateResult = await checkSanctionsPEP(baseline.legalName, baseline.ubos);
+  const hardGateResult = await checkSanctionsPEP(baseline.legalName, baseline.ubos, baseline.jurisdiction);
   if (hardGateResult.matched) {
     stageTrace.push(`HARD GATE: sanctions/PEP match on "${hardGateResult.matchedEntity}" → CRITICAL, pipeline short-circuited.`);
     const composite = computeCompositeScore([], hardGateResult);
     composite.clientId = baseline.clientId;
     return { composite, evidenceBySignal, stageTrace };
   }
-  stageTrace.push("Hard gate clear (no sanctions/PEP match).");
+
+  // Two-tier: candidate name-matches below the auto-block threshold go to a human review
+  // queue instead of auto-CRITICAL (avoids homonym false positives).
+  let sanctionsReview: PipelineResult["sanctionsReview"];
+  if (hardGateResult.reviewRequired && hardGateResult.reviewCandidates?.length) {
+    sanctionsReview = {
+      candidates: hardGateResult.reviewCandidates,
+      note: "Sanctions name-match candidate(s) below auto-block threshold — requires human verification of identity (jurisdiction / LEI) before any action.",
+    };
+    const scores = hardGateResult.reviewCandidates.map((c) => c.score).join(", ");
+    stageTrace.push(
+      `Hard gate: ${hardGateResult.reviewCandidates.length} sanctions candidate(s) [score ${scores}] → HUMAN REVIEW QUEUE (not auto-blocked).`,
+    );
+  } else {
+    stageTrace.push("Hard gate clear (no sanctions/PEP match).");
+  }
 
   // Cache baseline + archetype embeddings once (see runbook D4).
   const baselineEmbedding = await embed(baseline.declaredBusinessDescription);
@@ -138,8 +154,8 @@ export async function runPipeline(
     const allEvidence = Object.values(evidenceBySignal).flat();
     const deepAnalysis = await deepAnalyze(baseline, composite, allEvidence, recentTxs);
     stageTrace.push(`HIGH → Stage 3 (Sonnet) deep analysis generated. Recommended: ${deepAnalysis.recommendedAction}.`);
-    return { composite, deepAnalysis, evidenceBySignal, stageTrace };
+    return { composite, deepAnalysis, evidenceBySignal, stageTrace, sanctionsReview };
   }
 
-  return { composite, evidenceBySignal, stageTrace };
+  return { composite, evidenceBySignal, stageTrace, sanctionsReview };
 }

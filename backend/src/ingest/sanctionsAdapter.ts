@@ -12,6 +12,7 @@ export interface SanctionsHit {
   score: number;
   source: string;
   programs?: string[];
+  jurisdiction?: string; // secondary identifier for homonym disambiguation (if available)
 }
 
 /** Normalize a name to a comparison key (lowercase alphanumerics only). */
@@ -32,6 +33,7 @@ export function loadSanctionsHits(path: URL | string = DEFAULT_PATH): Map<string
     score?: number;
     source?: string;
     programs?: string[];
+    jurisdiction?: string;
   }>;
   for (const h of arr) {
     if (h.matched === false) continue;
@@ -41,6 +43,7 @@ export function loadSanctionsHits(path: URL | string = DEFAULT_PATH): Map<string
       score: h.score ?? 100,
       source: h.source ?? "sanctions",
       programs: h.programs,
+      jurisdiction: h.jurisdiction,
     });
   }
   return map;

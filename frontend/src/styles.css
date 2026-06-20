@@ -103,6 +103,9 @@ body { margin: 0; }
 .detail-head h1 { font-size: 22px; margin: 0 0 4px; }
 .detail-score { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; min-width: 140px; }
 .hardgate { background: #2a1210; border: 1px solid #5e2420; color: #f48b86; padding: 14px 18px; border-radius: 8px; font-weight: 600; margin-bottom: 18px; }
+.review-queue { background: #2a2210; border: 1px solid #5e4f20; color: #e0c060; padding: 14px 18px; border-radius: 8px; font-weight: 600; margin-bottom: 18px; }
+.review-queue ul { margin: 8px 0 0; padding-left: 20px; font-weight: 400; font-size: 13px; }
+.review-queue li { padding: 2px 0; }
 
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
 .card h3 { margin: 0 0 10px; font-size: 14px; }

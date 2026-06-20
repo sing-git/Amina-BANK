@@ -263,6 +263,19 @@ function Detail({
         <div className="hardgate">⛔ SANCTIONS / PEP MATCH — {c.hardGateReason}</div>
       )}
 
+      {alert.sanctionsReview && (
+        <div className="review-queue">
+          ⚠ SANCTIONS REVIEW PENDING — {alert.sanctionsReview.note}
+          <ul>
+            {alert.sanctionsReview.candidates.map((cand, i) => (
+              <li key={i}>
+                "{cand.name}" ≈ <b>{cand.matchedEntity}</b> (score {cand.score}, {cand.source}) — verify identity
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <section className="card">
         <h3>Declared business (onboarding baseline)</h3>
         <p className="declared">{b.declaredBusinessDescription}</p>

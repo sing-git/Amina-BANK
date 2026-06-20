@@ -51,6 +51,10 @@ export interface Alert {
   deepAnalysis?: DeepAnalysis;
   stageTrace: string[];
   evidenceBySignal: Record<string, { sourceUrl: string; text: string }[]>;
+  sanctionsReview?: {
+    candidates: { name: string; matchedEntity: string; score: number; source: string }[];
+    note: string;
+  };
 }
 
 export interface Cost {
