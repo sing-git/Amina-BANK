@@ -28,15 +28,6 @@ flowchart LR
     K["🔒 Internal KYC baseline<br/>onboarding profile + transactions"]
   end
 
-| Layer | Source | What it tells us |
-| :--- | :--- | :--- |
-| Public | 📰 News & adverse media | lawsuits, fraud, pivots, leadership shake-ups |
-| Public | ⚖️ Sanctions & watchlists (OFAC · UN · OpenSanctions) | is this name — or anyone near it — flagged |
-| Public | 🏛️ Corporate registry (GLEIF · ZEFIX · Companies House) | name change, jurisdiction move, legal-form change |
-| Public | 🌐 Domain & website (WHOIS · Wayback) | business-activity change, ownership of the web presence |
-| Private | 🔒 Internal KYC baseline | declared business, expected volumes, countries, owners (UBOs), risk rating |
-
-
   subgraph NER["2 · ENTITY RECOGNITION"]
     direction TB
     M["Match signal → customer<br/>NER mention count"]
