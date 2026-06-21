@@ -76,7 +76,7 @@ flowchart LR
 | Public | 📰 News & adverse media | lawsuits, fraud, pivots, leadership shake-ups |
 | Public | ⚖️ Sanctions & watchlists (OFAC · UN · OpenSanctions) | is this name — or anyone near it — flagged |
 | Public | 🏛️ Corporate registry (GLEIF · ZEFIX · Companies House) | name change, jurisdiction move, legal-form change |
-| Public | 💰 Funding (Crunchbase) | sudden scale change, new investors |
+
 | Public | 🌐 Domain & website (WHOIS · Wayback) | business-activity change, ownership of the web presence |
 | **Private** | 🔒 **Internal KYC baseline** | declared business, expected volumes, countries, owners (UBOs), risk rating |
 
