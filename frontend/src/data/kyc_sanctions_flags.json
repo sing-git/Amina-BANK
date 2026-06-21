@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-06-20T18:33:31.257128+00:00",
+  "threshold": 95.0,
+  "names_screened": 120,
+  "flagged_count": 1,
+  "flags": [
+    {
+      "name": "Banco Nacional de Cuba",
+      "kind": "Linked entity",
+      "contexts": [
+        {
+          "linked_to": "The Boeing Company",
+          "role": "Donor of the aircraft",
+          "dimension": "ownership_change",
+          "title": "President Donald Trump unveils the new Air Force One, a converted Qatari jet - AP News",
+          "url": "https://apnews.com/article/trump-air-force-one-qatar-5d6997dba287d70749b736067c8a337b"
+        }
+      ],
+      "matches": [
+        {
+          "score": 100.0,
+          "matched_name": "BANCO NACIONAL DE CUBA",
+          "is_primary": true,
+          "entity_type": "Entity",
+          "source": "OFAC",
+          "list_name": "SDN List",
+          "entity_id": "306",
+          "programs": [
+            "CUBA"
+          ]
+        },
+        {
+          "score": 100.0,
+          "matched_name": "BANCO NACIONAL DE CUBA",
+          "is_primary": true,
+          "entity_type": "Entity",
+          "source": "OpenSanctions",
+          "list_name": "OpenSanctions Consolidated Sanctions",
+          "entity_id": "NK-UGeAVur6mctZaurxVxbZ7y",
+          "programs": [
+            "US OFAC Specially Designated Nationals (SDN) List",
+            "US Trade Consolidated Screening List (CSL)"
+          ]
+        }
+      ]
+    }
+  ]
+}

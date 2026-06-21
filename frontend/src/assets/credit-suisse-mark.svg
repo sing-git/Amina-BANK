@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 200" fill="#0B3C6A">
+  <!-- Left main sail: sweeps from bottom-left up to apex -->
+  <path d="M 26 196 C 8 134, 4 66, 87 5 C 116 46, 116 96, 105 142 C 78 166, 50 184, 26 196 Z"/>
+  <!-- Upper right sail: sits right of apex, V-gap between the two -->
+  <path d="M 100 5 C 130 1, 160 3, 191 13 C 174 54, 162 103, 161 144 C 141 149, 121 145, 105 142 C 101 96, 100 48, 100 5 Z"/>
+  <!-- Bottom deck sweep with small notch at far right -->
+  <path d="M 112 151 C 152 143, 200 135, 257 121 L 257 149 C 242 158, 225 167, 222 170 L 236 180 L 257 192 C 240 196, 210 198, 190 196 C 163 196, 134 198, 112 198 C 110 182, 109 166, 112 151 Z"/>
+</svg>

@@ -1,0 +1,73 @@
+[
+    {
+        "company_name": "The Boeing Company",
+        "status": "HEALTHY",
+        "negative_alerts": [],
+        "missing_info_warnings": [
+            "Source data missing: CEO not tracked by this API."
+        ],
+        "raw_api_data": {
+            "legal_name": "THE BOEING COMPANY",
+            "company_status": "ACTIVE",
+            "jurisdiction": "US",
+            "legal_form": "Unknown",
+            "ownership": "API GLEIF: Not provided",
+            "officers": {
+                "CEO": "API GLEIF: Not provided"
+            }
+        }
+    },
+    {
+        "company_name": "Terraform Labs",
+        "status": "DRIFT DETECTED",
+        "negative_alerts": [
+            "Critical Status Change: -> 'DISSOLVED'",
+            "CEO changed: 'Do Kwon' -> Not found in [Unknown]"
+        ],
+        "missing_info_warnings": [],
+        "raw_api_data": {
+            "legal_name": "Terraform Labs",
+            "company_status": "Dissolved",
+            "jurisdiction": "Singapore",
+            "legal_form": "Private Limited Company",
+            "ownership": "API ACRA: Not provided",
+            "officers": {
+                "CEO": "Unknown"
+            }
+        }
+    },
+    {
+        "company_name": "Revolut Ltd",
+        "status": "HEALTHY",
+        "negative_alerts": [],
+        "missing_info_warnings": [],
+        "raw_api_data": {
+            "legal_name": "REVOLUT LTD",
+            "company_status": "active",
+            "jurisdiction": "UK",
+            "legal_form": "ltd",
+            "ownership": "API UK: Not provided",
+            "officers": {
+                "CEO": "BRITTON, Caroline Louise | GILBERT, Martin James | SHERWOOD, Michael Sidney | SIEVWRIGHT, John Phimister | STORONSKIY, Nikolay | TEODOSIU, Dan | WILSON, Ian Douglas | YATSENKO, Vladyslav"
+            }
+        }
+    },
+    {
+        "company_name": "Pfizer Inc.",
+        "status": "HEALTHY",
+        "negative_alerts": [],
+        "missing_info_warnings": [
+            "Source data missing: CEO not tracked by this API."
+        ],
+        "raw_api_data": {
+            "legal_name": "PFIZER INC.",
+            "company_status": "ACTIVE",
+            "jurisdiction": "US",
+            "legal_form": "Unknown",
+            "ownership": "API GLEIF: Not provided",
+            "officers": {
+                "CEO": "API GLEIF: Not provided"
+            }
+        }
+    }
+]

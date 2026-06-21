@@ -2,16 +2,16 @@
    Mirrors the clusters view palette so it sits natively in the app. */
 
 .src-root {
-  --s-canvas: #f3eee3;
-  --s-surface: #faf7f0;
-  --s-raised: #ece5d7;
-  --s-land: #e7dfcf;
-  --s-ink: #241f18;
-  --s-ink-soft: #574f40;
-  --s-ink-muted: #857b68;
-  --s-line: #2b2620;
+  --s-canvas: #ffffff;
+  --s-surface: #ffffff;
+  --s-raised: #f1f5f9;
+  --s-land: #e2e8f0;
+  --s-ink: #0f172a;
+  --s-ink-soft: #334155;
+  --s-ink-muted: #64748b;
+  --s-line: #cbd5e1;
 
-  font-family: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   color: var(--s-ink);
   display: flex;
   flex-direction: column;
@@ -99,6 +99,11 @@
   height: calc(100vh - 300px);
   min-height: 520px;
 }
+/* 3-D globe variant — white background */
+.src-map-globe {
+  background: #ffffff;
+}
+.src-map-globe canvas { display: block; }
 .src-svg { width: 100%; height: 100%; }
 .src-marker { cursor: pointer; }
 .src-marker-label { fill: #fff; font-weight: 600; user-select: none; pointer-events: none; }
@@ -121,10 +126,10 @@
 .src-filter {
   pointer-events: auto;
   border: 1px solid var(--s-line);
-  background: rgba(250, 247, 240, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 1px 3px rgba(36, 31, 24, 0.12);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
   backdrop-filter: blur(4px);
   max-width: 320px;
 }
@@ -148,7 +153,7 @@
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
-.src-filter-all:hover:not(:disabled) { border-color: #161208; color: var(--s-ink); }
+.src-filter-all:hover:not(:disabled) { border-color: #0f172a; color: var(--s-ink); }
 .src-filter-all:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .src-pills { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -165,32 +170,32 @@
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.src-pill:hover { border-color: #161208; }
+.src-pill:hover { border-color: #0f172a; }
 .src-pill-on {
-  border-color: rgba(192, 57, 43, 0.5);
-  background: rgba(192, 57, 43, 0.12);
-  color: #a5311f;
+  border-color: rgba(21, 181, 166, 0.5);
+  background: rgba(21, 181, 166, 0.10);
+  color: #0d9488;
 }
 .src-pill-count { color: var(--s-ink-muted); }
-.src-pill-on .src-pill-count { color: #a5311f; }
+.src-pill-on .src-pill-count { color: #0d9488; }
 .src-empty { font-size: 12px; color: var(--s-ink-muted); }
 
 /* Reset button */
 .src-reset {
   pointer-events: auto;
   border: 1px solid var(--s-line);
-  background: rgba(250, 247, 240, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
   color: var(--s-ink-soft);
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(36, 31, 24, 0.12);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
   backdrop-filter: blur(4px);
   transition: border-color 0.15s ease, color 0.15s ease;
 }
-.src-reset:hover { border-color: #161208; color: var(--s-ink); }
+.src-reset:hover { border-color: #0f172a; color: var(--s-ink); }
 
 /* Tooltip */
 .src-tooltip {
@@ -199,11 +204,11 @@
   max-width: 260px;
   transform: translate(12px, 12px);
   border: 1px solid var(--s-line);
-  background: rgba(250, 247, 240, 0.96);
+  background: rgba(255, 255, 255, 0.96);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 12px;
-  box-shadow: 0 1px 3px rgba(36, 31, 24, 0.14);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
   pointer-events: none;
 }
 .src-tooltip-title { margin: 0; font-weight: 600; line-height: 1.3; color: var(--s-ink); }

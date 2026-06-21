@@ -3,7 +3,7 @@ import type { Alert, AuditEntry } from "./types";
 import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
 import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
 import { ClustersView } from "./clusters/ClustersView";
-import { SourcesView } from "./sources/SourcesView";
+import { SourcesIntelView } from "./sources/SourcesIntelView";
 import { KycView } from "./kyc/KycView";
 import aminaLogo from "../assets/AminaBank_logo.png";
 import { SonarLogo } from "./SonarLogo";
@@ -85,87 +85,125 @@ export function App() {
 
   return (
     <div className="app">
+      {/* ── Topbar ── */}
       <header className="topbar">
-        <div className="topbar-left">
-          <span className="advisory">ADVISORY ONLY — a human approves every decision</span>
-        </div>
-        <div className="brand">
+        <div className="topbar-left" />
+        <div className="topbar-center">
           <div className="brand-title-row">
             <SonarLogo className="brand-sonar" />
             <h1 className="brand-name">Risk Horizon</h1>
           </div>
         </div>
         <div className="topbar-right">
-          <img className="brand-logo" src={aminaLogo} alt="AMINA" />
+          {view !== "clusters" && view !== "sources" && view !== "kyc" && (
+            <div className="data-source-toggle">
+              <button className={source === "demo" ? "ds-btn ds-btn-on" : "ds-btn"} onClick={() => setSource("demo")}>
+                Demo cases
+              </button>
+              <button className={source === "portfolio" ? "ds-btn ds-btn-on" : "ds-btn"} onClick={() => setSource("portfolio")}>
+                Team portfolio
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
-      <nav className="tabs">
-        <button className={view === "queue" ? "tab tab-on" : "tab"} onClick={() => setView("queue")}>
-          Alert Queue
-        </button>
-        <button className={view === "clusters" ? "tab tab-on" : "tab"} onClick={() => setView("clusters")}>
-          Clusters
-        </button>
-        <button className={view === "sources" ? "tab tab-on" : "tab"} onClick={() => setView("sources")}>
-          Sources
-        </button>
-        <button className={view === "kyc" ? "tab tab-on" : "tab"} onClick={() => setView("kyc")}>
-          Onboarding
-        </button>
-        <button className={view === "audit" ? "tab tab-on" : "tab"} onClick={() => setView("audit")}>
-          Audit Log {audit.length ? `(${audit.length})` : ""}
-        </button>
-        {view !== "clusters" && view !== "sources" && view !== "kyc" && (
-          <div className="source-toggle">
-            <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
-              Demo cases
-            </button>
-            <button className={source === "portfolio" ? "src src-on" : "src"} onClick={() => setSource("portfolio")}>
-              Team portfolio
-            </button>
-          </div>
-        )}
-      </nav>
+      {/* ── Body: sidenav + content ── */}
+      <div className="app-body">
+        <nav className="sidenav">
+          <NavItem icon={<IconBell />}    label="Alert Queue" active={view === "queue"}    onClick={() => setView("queue")} />
+          <NavItem icon={<IconNetwork />} label="Clusters"    active={view === "clusters"} onClick={() => setView("clusters")} />
+          <NavItem icon={<IconGrid />}    label="Sources"     active={view === "sources"}  onClick={() => setView("sources")} />
+          <NavItem icon={<IconUser />}    label="Onboarding"  active={view === "kyc"}      onClick={() => setView("kyc")} />
+          <NavItem icon={<IconClock />}   label="Audit Log"   active={view === "audit"}    onClick={() => setView("audit")}
+            badge={audit.length || undefined} />
+        </nav>
 
-      {view === "clusters" && <ClustersView />}
+        <div className="app-content">
+          {view === "clusters" && <ClustersView />}
+          {view === "sources"  && <SourcesIntelView />}
+          {view === "kyc"      && <KycView />}
 
-      {view === "sources" && <SourcesView />}
+          {loading && view !== "clusters" && view !== "sources" && view !== "kyc" && (
+            <div className="empty">Loading…</div>
+          )}
 
-      {view === "kyc" && <KycView />}
+          {!loading && view === "queue" && (
+            <div className={`queue-layout ${current ? "queue-layout-split" : ""}`}>
+              <aside className={`queue-side ${current ? "queue-side-narrow" : "queue-side-full"}`}>
+                <Queue alerts={alerts} decided={decided} onOpen={setSelected} selectedId={selected} />
+              </aside>
+              {current && (
+                <div className="queue-main">
+                  <Detail
+                    alert={current}
+                    decided={decided[current.baseline.clientId]}
+                    signalDecisions={signalDecisions}
+                    signalNotes={signalNotes}
+                    onSignalDecide={decideSignal}
+                    onSignalNote={noteSignal}
+                    onBack={() => setSelected(null)}
+                    onDecide={decide}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
-      {loading && view !== "clusters" && view !== "sources" && view !== "kyc" && (
-        <div className="empty">Loading…</div>
-      )}
+          {!loading && view === "audit" && <AuditView audit={audit} />}
 
-      {!loading && view === "queue" && (
-        <div className="queue-split">
-          <aside className="queue-side">
-            <Queue alerts={alerts} decided={decided} onOpen={setSelected} selectedId={selected} />
-          </aside>
-          <div className="queue-main">
-            {current ? (
-              <Detail
-                alert={current}
-                decided={decided[current.baseline.clientId]}
-                signalDecisions={signalDecisions}
-                signalNotes={signalNotes}
-                onSignalDecide={decideSignal}
-                onSignalNote={noteSignal}
-                onBack={() => setSelected(null)}
-                onDecide={decide}
-              />
-            ) : (
-              <div className="empty">Select a client to review</div>
-            )}
-          </div>
+          <footer className="site-footer">
+            <div className="site-footer-inner">
+              <img className="footer-logo" src={aminaLogo} alt="AMINA" />
+              <span className="footer-text">Risk Horizon is powered by AMINA Bank's AI compliance infrastructure.</span>
+              <span className="footer-copy">&copy; {new Date().getFullYear()} AMINA Group AG</span>
+            </div>
+          </footer>
         </div>
-      )}
-
-      {!loading && view === "audit" && <AuditView audit={audit} />}
+      </div>
     </div>
   );
 }
+
+/* ── Sidenav helpers ─────────────────────────────────────────────── */
+function NavItem({ icon, label, active, onClick, badge }: {
+  icon: React.ReactNode; label: string; active: boolean;
+  onClick: () => void; badge?: number;
+}) {
+  return (
+    <button className={`sidenav-item ${active ? "sidenav-item-on" : ""}`} onClick={onClick}>
+      <span className="sidenav-icon">{icon}</span>
+      <span className="sidenav-label">{label}</span>
+      {badge ? <span className="sidenav-badge">{badge}</span> : null}
+    </button>
+  );
+}
+
+const IconBell = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+  </svg>
+);
+const IconNetwork = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/>
+  </svg>
+);
+const IconUser = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v1c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-1c0-2.66-5.33-4-8-4z"/>
+  </svg>
+);
+const IconClock = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z"/>
+  </svg>
+);
+const IconGrid = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
+  </svg>
+);
 
 function Queue({
   alerts,
@@ -179,6 +217,11 @@ function Queue({
   selectedId: string | null;
 }) {
   return (
+    <>
+      <div className="queue-page-head">
+        <h2 className="queue-page-title">Alert Queue</h2>
+        <span className="queue-page-count">{alerts.length} client{alerts.length !== 1 ? "s" : ""}</span>
+      </div>
     <table className="queue">
       <thead>
         <tr>
@@ -229,6 +272,7 @@ function Queue({
         })}
       </tbody>
     </table>
+    </>
   );
 }
 
@@ -262,13 +306,15 @@ function Detail({
       </button>
 
       <div className="detail-head">
-        <div>
+        <div className="detail-avatar" data-risk={c.riskFlag}>
+          {b.legalName.split(/\s+/).slice(0,2).map((w: string) => w[0]).join("").toUpperCase()}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1>
             {b.legalName} <SyntheticChip />
           </h1>
           <div className="client-sub">
-            {b.jurisdiction} · {b.legalForm} · onboarded {b.onboardingDate} · generated by{" "}
-            {b.generatedBy ?? "—"}
+            {b.jurisdiction} · {b.legalForm} · onboarded {b.onboardingDate}
           </div>
         </div>
         <div className="detail-score">
