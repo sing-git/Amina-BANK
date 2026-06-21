@@ -24,7 +24,8 @@ flowchart LR
     N["📰 News &amp; adverse media<br/>Brave / RSS"]
     S["⚖️ Sanctions &amp; watchlists<br/>OFAC · UN · OpenSanctions"]
     R["🏛️ Corporate registry<br/>GLEIF · ZEFIX · Companies House"]
-    D["🌐 Domain &amp; website<br/>WHOIS · Wayback · HTTP live check"]
+    F["💰 Funding<br/>Crunchbase"]
+    D["🌐 Domain &amp; website<br/>WHOIS · Wayback"]
     K["🔒 Internal KYC baseline<br/>onboarding profile + transactions"]
   end
 
@@ -75,7 +76,8 @@ flowchart LR
 | Public | 📰 News & adverse media | lawsuits, fraud, pivots, leadership shake-ups |
 | Public | ⚖️ Sanctions & watchlists (OFAC · UN · OpenSanctions) | is this name — or anyone near it — flagged |
 | Public | 🏛️ Corporate registry (GLEIF · ZEFIX · Companies House) | name change, jurisdiction move, legal-form change |
-| Public | 🌐 Domain & website (WHOIS · Wayback · HTTP live check) | business-activity change, ownership of the web presence |
+| Public | 💰 Funding (Crunchbase) | sudden scale change, new investors |
+| Public | 🌐 Domain & website (WHOIS · Wayback) | business-activity change, ownership of the web presence |
 | **Private** | 🔒 **Internal KYC baseline** | declared business, expected volumes, countries, owners (UBOs), risk rating |
 
 The baseline is the **ruler**. Every public signal is measured as a *distance from* it. Drift is that
