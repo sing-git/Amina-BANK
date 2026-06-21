@@ -21,6 +21,8 @@ export interface ClientBaseline {
   onboardingDate: string;
   declaredBusinessDescription: string;
   expectedMonthlyVolumeUSD: number;
+  expectedMonthlyTxCount?: number; // present on real portfolio baselines, absent in seed/demo
+  expectedCounterpartyRegions?: string[];
   riskRating: "low" | "medium" | "high";
   isSynthetic: true;
   generatedBy?: string;

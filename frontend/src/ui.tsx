@@ -1,9 +1,62 @@
 // Small reusable presentational components.
-import type { RiskFlag } from "./types";
+import type { Alert, RiskFlag } from "./types";
 
 export function humanize(category: string): string {
   const s = category.replace(/_/g, " ");
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+const FLAG_ORDER: RiskFlag[] = ["critical", "high", "medium", "low"];
+
+// Portfolio rollup: counts by risk flag + an honest data-source / live badge.
+export function QueueSummary({
+  alerts,
+  live,
+  source,
+}: {
+  alerts: Alert[];
+  live: boolean;
+  source?: string;
+}) {
+  const counts = alerts.reduce<Record<string, number>>((acc, a) => {
+    acc[a.composite.riskFlag] = (acc[a.composite.riskFlag] ?? 0) + 1;
+    return acc;
+  }, {});
+  const sourceLabel = !live
+    ? "Offline · bundled demo data"
+    : source === "cached"
+      ? "Gemini · cached"
+      : source === "postgres"
+        ? "Live · Postgres"
+        : source === "json-files"
+          ? "Live · JSON files"
+          : "Live · demo";
+  return (
+    <div className="queue-summary">
+      <span className="summary-total">{alerts.length} clients</span>
+      <div className="summary-counts">
+        {FLAG_ORDER.filter((f) => counts[f]).map((f) => (
+          <span key={f} className={`summary-count summary-count-${f}`}>
+            {counts[f]} {f.toUpperCase()}
+          </span>
+        ))}
+      </div>
+      <span className={`mode ${live ? "mode-live" : "mode-offline"}`}>{sourceLabel}</span>
+    </div>
+  );
+}
+
+// Which cost tier produced a signal — ties the per-signal view to the cost story.
+export function MethodTag({ method }: { method: string }) {
+  const label =
+    method === "rule_diff"
+      ? "Rule diff · free"
+      : method === "embedding"
+        ? "Embedding · free"
+        : method === "llm_classification"
+          ? "LLM · Stage 2/3"
+          : method;
+  return <span className={`method-tag method-${method}`}>{label}</span>;
 }
 
 export function RiskPill({ flag }: { flag: RiskFlag }) {

@@ -14,6 +14,7 @@ export interface AlertsResponse {
   alerts: Alert[];
   cost: Cost;
   live: boolean;
+  source?: string; // "postgres" | "json-files" from /api/portfolio/alerts; absent on demo
 }
 
 export type DataSource = "demo" | "portfolio";
@@ -23,7 +24,7 @@ export async function fetchAlerts(source: DataSource = "demo"): Promise<AlertsRe
   try {
     const res = await fetch(path);
     if (!res.ok) throw new Error(String(res.status));
-    const data = (await res.json()) as { alerts: Alert[]; cost: Cost };
+    const data = (await res.json()) as { alerts: Alert[]; cost: Cost; source?: string };
     return { ...data, live: true };
   } catch {
     // portfolio has no offline fallback; demo falls back to bundled seed data

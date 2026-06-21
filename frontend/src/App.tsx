@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Alert, AuditEntry } from "./types";
-import { fetchAlerts, fetchAudit, postDecision, type DataSource } from "./api";
-import { Bar, DirectionTag, driftArrow, humanize, RiskPill, ScoreMeter, SyntheticChip } from "./ui";
+import type { Alert, AuditEntry, RiskFlag } from "./types";
+import { fetchAlerts, fetchAudit, postDecision } from "./api";
+import {
+  Bar,
+  DirectionTag,
+  driftArrow,
+  humanize,
+  MethodTag,
+  QueueSummary,
+  RiskPill,
+  ScoreMeter,
+  SyntheticChip,
+} from "./ui";
 import { ClustersView } from "./clusters/ClustersView";
 import { SourcesView } from "./sources/SourcesView";
 import { KycView } from "./kyc/KycView";
@@ -19,19 +29,26 @@ export function App() {
   const [signalDecisions, setSignalDecisions] = useState<Record<string, string>>({});
   const [signalNotes, setSignalNotes] = useState<Record<string, string>>({});
   const [view, setView] = useState<"queue" | "audit" | "clusters" | "sources" | "kyc">("queue");
-  const [source, setSource] = useState<DataSource>("demo");
+  const [live, setLive] = useState(false);
+  const [dataSource, setDataSource] = useState<string | undefined>(undefined);
+  // queue filtering
+  const [riskFilter, setRiskFilter] = useState<RiskFlag | "all">("all");
+  const [query, setQuery] = useState("");
+  const [fraudOnly, setFraudOnly] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     setSelected(null);
-    fetchAlerts(source).then((r) => {
+    fetchAlerts("portfolio").then((r) => {
       const sorted = [...r.alerts].sort(
         (a, b) => RANK[a.composite.riskFlag] - RANK[b.composite.riskFlag],
       );
       setAlerts(sorted);
+      setLive(r.live);
+      setDataSource(r.source);
       setLoading(false);
     });
-  }, [source]);
+  }, []);
 
   useEffect(() => {
     fetchAudit().then(setAudit);
@@ -41,6 +58,18 @@ export function App() {
     () => alerts.find((a) => a.baseline.clientId === selected) ?? null,
     [alerts, selected],
   );
+
+  // Filtered view for the queue list ONLY — `current` stays on the full `alerts` array so
+  // filtering a selected client out of the list doesn't blank the open detail pane.
+  const visibleAlerts = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return alerts.filter(
+      (a) =>
+        (riskFilter === "all" || a.composite.riskFlag === riskFilter) &&
+        (!fraudOnly || a.composite.contributingSignals.some((s) => s.isFraudTypology)) &&
+        (!q || a.baseline.legalName.toLowerCase().includes(q)),
+    );
+  }, [alerts, riskFilter, fraudOnly, query]);
 
   async function decide(alert: Alert, action: "approve" | "reject" | "escalate") {
     const detail = window.prompt(`Optional note for "${action}" on ${alert.baseline.legalName}:`) ?? "";
@@ -116,16 +145,6 @@ export function App() {
         <button className={view === "audit" ? "tab tab-on" : "tab"} onClick={() => setView("audit")}>
           Audit Log {audit.length ? `(${audit.length})` : ""}
         </button>
-        {view !== "clusters" && view !== "sources" && view !== "kyc" && (
-          <div className="source-toggle">
-            <button className={source === "demo" ? "src src-on" : "src"} onClick={() => setSource("demo")}>
-              Demo cases
-            </button>
-            <button className={source === "portfolio" ? "src src-on" : "src"} onClick={() => setSource("portfolio")}>
-              Team portfolio
-            </button>
-          </div>
-        )}
       </nav>
 
       {view === "clusters" && <ClustersView />}
@@ -139,30 +158,92 @@ export function App() {
       )}
 
       {!loading && view === "queue" && (
-        <div className="queue-split">
-          <aside className="queue-side">
-            <Queue alerts={alerts} decided={decided} onOpen={setSelected} selectedId={selected} />
-          </aside>
-          <div className="queue-main">
-            {current ? (
-              <Detail
-                alert={current}
-                decided={decided[current.baseline.clientId]}
-                signalDecisions={signalDecisions}
-                signalNotes={signalNotes}
-                onSignalDecide={decideSignal}
-                onSignalNote={noteSignal}
-                onBack={() => setSelected(null)}
-                onDecide={decide}
+        <>
+          <QueueSummary alerts={alerts} live={live} source={dataSource} />
+          <div className="queue-split">
+            <aside className="queue-side">
+              <QueueControls
+                riskFilter={riskFilter}
+                setRiskFilter={setRiskFilter}
+                query={query}
+                setQuery={setQuery}
+                fraudOnly={fraudOnly}
+                setFraudOnly={setFraudOnly}
+                shown={visibleAlerts.length}
+                total={alerts.length}
               />
-            ) : (
-              <div className="empty">Select a client to review</div>
-            )}
+              <Queue alerts={visibleAlerts} decided={decided} onOpen={setSelected} selectedId={selected} />
+            </aside>
+            <div className="queue-main">
+              {current ? (
+                <Detail
+                  alert={current}
+                  decided={decided[current.baseline.clientId]}
+                  signalDecisions={signalDecisions}
+                  signalNotes={signalNotes}
+                  onSignalDecide={decideSignal}
+                  onSignalNote={noteSignal}
+                  onBack={() => setSelected(null)}
+                  onDecide={decide}
+                />
+              ) : (
+                <div className="empty">Select a client to review</div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {!loading && view === "audit" && <AuditView audit={audit} />}
+    </div>
+  );
+}
+
+const RISK_FILTERS: Array<RiskFlag | "all"> = ["all", "critical", "high", "medium", "low"];
+
+function QueueControls({
+  riskFilter,
+  setRiskFilter,
+  query,
+  setQuery,
+  fraudOnly,
+  setFraudOnly,
+  shown,
+  total,
+}: {
+  riskFilter: RiskFlag | "all";
+  setRiskFilter: (f: RiskFlag | "all") => void;
+  query: string;
+  setQuery: (q: string) => void;
+  fraudOnly: boolean;
+  setFraudOnly: (b: boolean) => void;
+  shown: number;
+  total: number;
+}) {
+  return (
+    <div className="queue-controls">
+      <div className="queue-filters">
+        {RISK_FILTERS.map((f) => (
+          <button
+            key={f}
+            className={riskFilter === f ? "src src-on" : "src"}
+            onClick={() => setRiskFilter(f)}
+          >
+            {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+        <button className={fraudOnly ? "src src-on" : "src"} onClick={() => setFraudOnly(!fraudOnly)}>
+          ⚠ Fraud only
+        </button>
+      </div>
+      <input
+        className="queue-search"
+        type="text"
+        placeholder="Search client…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      {shown !== total && <div className="queue-shown">{shown} of {total} shown</div>}
     </div>
   );
 }
@@ -178,6 +259,9 @@ function Queue({
   onOpen: (id: string) => void;
   selectedId: string | null;
 }) {
+  if (alerts.length === 0) {
+    return <div className="empty">No clients match these filters.</div>;
+  }
   return (
     <table className="queue">
       <thead>
@@ -195,6 +279,8 @@ function Queue({
           const id = a.baseline.clientId;
           const sel = id === selectedId;
           const dec = decided[id];
+          const sigCount = a.composite.contributingSignals.length;
+          const hasFraud = a.composite.contributingSignals.some((s) => s.isFraudTypology);
           return (
             <tr key={id} className={sel ? "qrow-on" : ""} onClick={() => onOpen(id)}>
               <td>
@@ -211,11 +297,19 @@ function Queue({
                 <ScoreMeter score={a.composite.compositeScore} />
               </td>
               <td className="signal-cell">
-                {a.composite.hardGateTriggered
-                  ? "Sanctions / PEP hit"
-                  : top
-                    ? humanize(top.category)
-                    : "—"}
+                <div>
+                  {a.composite.hardGateTriggered
+                    ? "Sanctions / PEP hit"
+                    : top
+                      ? humanize(top.category)
+                      : "—"}
+                </div>
+                <div className="qrow-badges">
+                  {sigCount > 0 && <span className="qrow-count">{sigCount} signal{sigCount > 1 ? "s" : ""}</span>}
+                  {hasFraud && <span className="fraud-badge">⚠ FRAUD / AML</span>}
+                  {a.jury && <span className="chip-stage" title="Adversarial jury ran">⚖ jury</span>}
+                  {a.deepAnalysis && <span className="chip-stage" title="Stage 3 deep analysis">S3</span>}
+                </div>
               </td>
               <td>
                 {dec ? (
@@ -299,7 +393,13 @@ function Detail({
         <p className="declared">{b.declaredBusinessDescription}</p>
         <div className="kv">
           <span>Expected monthly volume: ${b.expectedMonthlyVolumeUSD.toLocaleString()}</span>
+          {b.expectedMonthlyTxCount != null && (
+            <span>Expected monthly tx count: {b.expectedMonthlyTxCount.toLocaleString()}</span>
+          )}
           <span>Onboarding risk: {b.riskRating}</span>
+          {b.expectedCounterpartyRegions && b.expectedCounterpartyRegions.length > 0 && (
+            <span>Expected regions: {b.expectedCounterpartyRegions.join(", ")}</span>
+          )}
           <span>
             UBOs: {b.ubos.map((u) => `${u.name} (${u.ownershipPct}%${u.isPEP ? ", PEP" : ""})`).join(", ")}
           </span>
@@ -314,6 +414,7 @@ function Detail({
               <div className="signal-top">
                 <strong>{humanize(s.category)}</strong>
                 <DirectionTag direction={s.direction} />
+                <MethodTag method={s.method} />
                 {s.isFraudTypology && <span className="fraud-badge">⚠ FRAUD / AML</span>}
               </div>
               <p className="rationale">{s.rationale}</p>

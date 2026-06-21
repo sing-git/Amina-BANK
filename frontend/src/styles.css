@@ -109,6 +109,42 @@ body { margin: 0; }
 .cost-num { color: var(--txt); font-weight: 700; font-size: 16px; }
 .cost-note { margin-left: auto; font-size: 12px; font-style: italic; }
 
+/* portfolio summary header — counts by risk flag + data-source badge */
+.queue-summary {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: 16px;
+  padding: 12px 18px; margin: 18px 24px 0;
+}
+.summary-total { font-weight: 600; color: var(--txt); }
+.summary-counts { display: flex; gap: 10px; flex-wrap: wrap; }
+.summary-count { font-size: 12px; font-weight: 700; letter-spacing: 0.03em; padding: 3px 10px; border-radius: 999px; background: var(--panel-2); }
+.summary-count-low { color: #56684a; }
+.summary-count-medium { color: #866829; }
+.summary-count-high { color: #9c5526; }
+.summary-count-critical { color: #9e352f; }
+.queue-summary .mode { margin-left: auto; }
+
+/* queue filter / search controls */
+.queue-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.queue-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.queue-search {
+  background: var(--panel); border: 1px solid var(--line-strong); color: var(--txt);
+  font: inherit; font-size: 12px; padding: 6px 12px; border-radius: 999px; max-width: 240px;
+}
+.queue-search::placeholder { color: var(--muted); }
+.queue-shown { font-size: 11px; color: var(--muted); }
+
+/* richer queue rows */
+.qrow-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 5px; }
+.qrow-count { font-size: 10px; color: var(--muted); background: var(--panel-2); border: 1px solid var(--line); padding: 1px 7px; border-radius: 999px; }
+.chip-stage { font-size: 10px; color: var(--accent); background: var(--panel-2); border: 1px solid var(--line-strong); padding: 1px 7px; border-radius: 999px; letter-spacing: 0.04em; }
+
+/* per-signal method (cost tier) tag */
+.method-tag { font-size: 11px; padding: 2px 9px; border-radius: 999px; font-weight: 600; background: var(--panel-2); }
+.method-rule_diff { color: #4f7d4f; }
+.method-embedding { color: #866829; }
+.method-llm_classification { color: var(--accent); }
+
 /* queue table */
 .queue {
   width: 100%; border-collapse: collapse; background: var(--panel);
