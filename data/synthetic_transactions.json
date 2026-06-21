@@ -1,0 +1,602 @@
+{
+  "CUST-001": [
+    {
+      "txId": "TX-CUST-001-1",
+      "clientId": "CUST-001",
+      "date": "2026-04-08",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-001-2",
+      "clientId": "CUST-001",
+      "date": "2026-04-22",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-001-3",
+      "clientId": "CUST-001",
+      "date": "2026-05-09",
+      "amountUSD": 4400550,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-001-4",
+      "clientId": "CUST-001",
+      "date": "2026-05-24",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-001-5",
+      "clientId": "CUST-001",
+      "date": "2026-06-07",
+      "amountUSD": 3800475,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-001-6",
+      "clientId": "CUST-001",
+      "date": "2026-06-15",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-002": [
+    {
+      "txId": "TX-CUST-002-7",
+      "clientId": "CUST-002",
+      "date": "2025-10-30",
+      "amountUSD": 1250500,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-002-8",
+      "clientId": "CUST-002",
+      "date": "2025-11-04",
+      "amountUSD": 1000400,
+      "counterpartyRegion": "United States",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-002-9",
+      "clientId": "CUST-002",
+      "date": "2026-06-03",
+      "amountUSD": 2400000,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-002-10",
+      "clientId": "CUST-002",
+      "date": "2026-06-08",
+      "amountUSD": 1300000,
+      "counterpartyRegion": "Seychelles",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-002-11",
+      "clientId": "CUST-002",
+      "date": "2026-06-14",
+      "amountUSD": 1050000,
+      "counterpartyRegion": "Cayman Islands",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-003": [
+    {
+      "txId": "TX-CUST-003-12",
+      "clientId": "CUST-003",
+      "date": "2026-04-08",
+      "amountUSD": 625500,
+      "counterpartyRegion": "United Kingdom",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-003-13",
+      "clientId": "CUST-003",
+      "date": "2026-04-22",
+      "amountUSD": 562950,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-003-14",
+      "clientId": "CUST-003",
+      "date": "2026-05-09",
+      "amountUSD": 688050,
+      "counterpartyRegion": "United Kingdom",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-003-15",
+      "clientId": "CUST-003",
+      "date": "2026-05-24",
+      "amountUSD": 625500,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-003-16",
+      "clientId": "CUST-003",
+      "date": "2026-06-07",
+      "amountUSD": 594225,
+      "counterpartyRegion": "United Kingdom",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-003-17",
+      "clientId": "CUST-003",
+      "date": "2026-06-15",
+      "amountUSD": 562950,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-004": [
+    {
+      "txId": "TX-CUST-004-18",
+      "clientId": "CUST-004",
+      "date": "2026-04-08",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-004-19",
+      "clientId": "CUST-004",
+      "date": "2026-04-22",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-004-20",
+      "clientId": "CUST-004",
+      "date": "2026-05-09",
+      "amountUSD": 4400550,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-004-21",
+      "clientId": "CUST-004",
+      "date": "2026-05-24",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-004-22",
+      "clientId": "CUST-004",
+      "date": "2026-06-07",
+      "amountUSD": 3800475,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-004-23",
+      "clientId": "CUST-004",
+      "date": "2026-06-15",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-005": [
+    {
+      "txId": "TX-CUST-005-24",
+      "clientId": "CUST-005",
+      "date": "2026-04-08",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "Switzerland",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-005-25",
+      "clientId": "CUST-005",
+      "date": "2026-04-22",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-005-26",
+      "clientId": "CUST-005",
+      "date": "2026-05-09",
+      "amountUSD": 4400550,
+      "counterpartyRegion": "Switzerland",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-005-27",
+      "clientId": "CUST-005",
+      "date": "2026-05-24",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-005-28",
+      "clientId": "CUST-005",
+      "date": "2026-06-07",
+      "amountUSD": 3800475,
+      "counterpartyRegion": "Switzerland",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-005-29",
+      "clientId": "CUST-005",
+      "date": "2026-06-15",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-006": [
+    {
+      "txId": "TX-CUST-006-30",
+      "clientId": "CUST-006",
+      "date": "2026-04-08",
+      "amountUSD": 1000500,
+      "counterpartyRegion": "Hong Kong",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-006-31",
+      "clientId": "CUST-006",
+      "date": "2026-04-22",
+      "amountUSD": 900450,
+      "counterpartyRegion": "China",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-006-32",
+      "clientId": "CUST-006",
+      "date": "2026-05-09",
+      "amountUSD": 1100550,
+      "counterpartyRegion": "Hong Kong",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-006-33",
+      "clientId": "CUST-006",
+      "date": "2026-05-24",
+      "amountUSD": 1000500,
+      "counterpartyRegion": "China",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-006-34",
+      "clientId": "CUST-006",
+      "date": "2026-06-07",
+      "amountUSD": 950475,
+      "counterpartyRegion": "Hong Kong",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-006-35",
+      "clientId": "CUST-006",
+      "date": "2026-06-15",
+      "amountUSD": 900450,
+      "counterpartyRegion": "China",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-007": [
+    {
+      "txId": "TX-CUST-007-36",
+      "clientId": "CUST-007",
+      "date": "2026-04-08",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-007-37",
+      "clientId": "CUST-007",
+      "date": "2026-04-22",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-007-42",
+      "clientId": "CUST-007",
+      "date": "2026-06-02",
+      "amountUSD": 9600,
+      "counterpartyRegion": "United States",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-007-43",
+      "clientId": "CUST-007",
+      "date": "2026-06-06",
+      "amountUSD": 9400,
+      "counterpartyRegion": "United States",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-007-44",
+      "clientId": "CUST-007",
+      "date": "2026-06-11",
+      "amountUSD": 9750,
+      "counterpartyRegion": "United States",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-007-45",
+      "clientId": "CUST-007",
+      "date": "2026-06-16",
+      "amountUSD": 8900,
+      "counterpartyRegion": "United States",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-008": [
+    {
+      "txId": "TX-CUST-008-46",
+      "clientId": "CUST-008",
+      "date": "2026-04-08",
+      "amountUSD": 1875500,
+      "counterpartyRegion": "Hong Kong",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-008-47",
+      "clientId": "CUST-008",
+      "date": "2026-04-22",
+      "amountUSD": 1687950,
+      "counterpartyRegion": "China",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-008-52",
+      "clientId": "CUST-008",
+      "date": "2026-06-05",
+      "amountUSD": 3000000,
+      "counterpartyRegion": "Hong Kong",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-008-53",
+      "clientId": "CUST-008",
+      "date": "2026-06-09",
+      "amountUSD": 1500000,
+      "counterpartyRegion": "Seychelles",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-008-54",
+      "clientId": "CUST-008",
+      "date": "2026-06-13",
+      "amountUSD": 1350000,
+      "counterpartyRegion": "British Virgin Islands",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-009": [
+    {
+      "txId": "TX-CUST-009-55",
+      "clientId": "CUST-009",
+      "date": "2026-04-08",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-009-56",
+      "clientId": "CUST-009",
+      "date": "2026-04-22",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-009-57",
+      "clientId": "CUST-009",
+      "date": "2026-05-09",
+      "amountUSD": 4400550,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-009-58",
+      "clientId": "CUST-009",
+      "date": "2026-05-24",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-009-59",
+      "clientId": "CUST-009",
+      "date": "2026-06-07",
+      "amountUSD": 3800475,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-009-60",
+      "clientId": "CUST-009",
+      "date": "2026-06-15",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ],
+  "CUST-010": [
+    {
+      "txId": "TX-CUST-010-61",
+      "clientId": "CUST-010",
+      "date": "2026-04-08",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-010-62",
+      "clientId": "CUST-010",
+      "date": "2026-04-22",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-010-63",
+      "clientId": "CUST-010",
+      "date": "2026-05-09",
+      "amountUSD": 4400550,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-010-64",
+      "clientId": "CUST-010",
+      "date": "2026-05-24",
+      "amountUSD": 4000500,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-010-65",
+      "clientId": "CUST-010",
+      "date": "2026-06-07",
+      "amountUSD": 3800475,
+      "counterpartyRegion": "United States",
+      "direction": "inbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    },
+    {
+      "txId": "TX-CUST-010-66",
+      "clientId": "CUST-010",
+      "date": "2026-06-15",
+      "amountUSD": 3600450,
+      "counterpartyRegion": "European Union",
+      "direction": "outbound",
+      "isSynthetic": true,
+      "generatedBy": "manual"
+    }
+  ]
+}
