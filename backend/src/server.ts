@@ -11,6 +11,7 @@ import { loadDriftSignals } from "./ingest/newsAdapter.js";
 import { loadTransactions } from "./ingest/txAdapter.js";
 import { loadContagionFlags, contagionFlagToScore } from "./ingest/sanctionsFlagsAdapter.js";
 import { loadRegistryDriftScores } from "./ingest/corporateAdapter.js";
+import { loadSentimentScores } from "./ingest/sentimentAdapter.js";
 import { loadAllBaselines, loadAllSignals, pingDb } from "./db.js";
 import type { ClientBaseline, RawSignal, TransactionRecord } from "./types.js";
 
@@ -87,6 +88,7 @@ app.get("/api/portfolio/alerts", async (_req, res) => {
     const txByClient = loadTransactions();
     const contagionByClient = loadContagionFlags(baselines);
     const registryByClient = loadRegistryDriftScores(baselines);
+    const sentimentByClient = loadSentimentScores(baselines); // Stage-1 free semantic (Giulio)
 
     // Score all clients concurrently — each runPipeline is independent, so wall-clock is the
     // slowest single client rather than the sum (matters with a live LLM).
@@ -110,7 +112,8 @@ app.get("/api/portfolio/alerts", async (_req, res) => {
           : signals;
         const contagion = (contagionByClient[baseline.clientId] ?? []).map((c, i) => contagionFlagToScore(c, i));
         const registry = registryByClient[baseline.clientId] ?? [];
-        const result = await runPipeline(baseline, txs, withTx, [...contagion, ...registry]);
+        const sentiment = sentimentByClient[baseline.clientId] ?? [];
+        const result = await runPipeline(baseline, txs, withTx, [...contagion, ...registry, ...sentiment]);
         return { caseName: baseline.legalName, baseline, ...result };
       }),
     );
