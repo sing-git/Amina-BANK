@@ -13,8 +13,9 @@
   "softeningFactor": 0.3,
 
   "aggregation": {
-    "_doc": "repeated signals in the same category have diminishing returns: category contribution = maxContribution + duplicateDiscount × sum(rest). Keeps the score driven by distinct red flags, not raw news volume.",
-    "duplicateDiscount": 0.25
+    "_doc": "repeated signals in the same category have diminishing returns: category contribution = maxContribution + duplicateDiscount × sum(rest). Keeps the score driven by distinct red flags, not raw news volume. neutralFactor: small residual weight given to 'reviewed, not risk-increasing' signals so a screened-clean client shows a small non-zero score instead of a flat 0.",
+    "duplicateDiscount": 0.25,
+    "neutralFactor": 0.5
   },
 
   "signalWeights": {

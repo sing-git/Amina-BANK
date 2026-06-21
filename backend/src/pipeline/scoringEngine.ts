@@ -72,8 +72,19 @@ export function computeCompositeScore(
   const softening =
     aggregateByCategory(positiveSignals, contribution, POLICY.aggregation.duplicateDiscount) *
     POLICY.softeningFactor;
+  const riskScore = riskSum - softening;
 
-  const compositeScore = Math.max(0, Math.min(100, riskSum - softening));
+  // Neutral signals are "reviewed, not risk-increasing": they act as a small FLOOR (via max, not
+  // addition) so a screened-clean client shows a low non-zero score instead of a flat 0 — without
+  // inflating a client that already has real risk. Capped below the MEDIUM band so routine activity
+  // alone can never raise a flag. neutralFactor is compliance-owned policy.
+  const neutralFloor = Math.min(
+    aggregateByCategory(neutralSignals, contribution, POLICY.aggregation.duplicateDiscount) *
+      POLICY.aggregation.neutralFactor,
+    POLICY.flagBands.mediumFrom - 1,
+  );
+
+  const compositeScore = Math.max(0, Math.min(100, Math.max(riskScore, neutralFloor)));
 
   return {
     clientId,

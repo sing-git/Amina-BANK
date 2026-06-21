@@ -280,6 +280,7 @@ function Queue({
           const sel = id === selectedId;
           const dec = decided[id];
           const sigCount = a.composite.contributingSignals.length;
+          const neutralCount = a.composite.neutralSignals.length;
           const hasFraud = a.composite.contributingSignals.some((s) => s.isFraudTypology);
           return (
             <tr key={id} className={sel ? "qrow-on" : ""} onClick={() => onOpen(id)}>
@@ -302,7 +303,9 @@ function Queue({
                     ? "Sanctions / PEP hit"
                     : top
                       ? humanize(top.category)
-                      : "—"}
+                      : neutralCount > 0
+                        ? `0 risk · ${neutralCount} reviewed`
+                        : "—"}
                 </div>
                 <div className="qrow-badges">
                   {sigCount > 0 && <span className="qrow-count">{sigCount} signal{sigCount > 1 ? "s" : ""}</span>}
