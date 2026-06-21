@@ -11,6 +11,8 @@ import type { CostLogEntry } from "../types.js";
 const PRICING: Record<string, { in: number; out: number }> = {
   "claude-haiku-4-5-20251001": { in: 1.0, out: 5.0 },
   "claude-sonnet-4-6": { in: 3.0, out: 15.0 },
+  "gemini-2.5-flash-lite": { in: 0.1, out: 0.4 },
+  "gemini-3.1-flash-lite": { in: 0.1, out: 0.4 },
 };
 
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL; // e.g. "gemma3:4b" — set this to run free
@@ -20,6 +22,10 @@ const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434/api/generat
 // data-sovereignty story for a Swiss bank: reasoning stays on a Swiss/European model.
 const APERTUS_BASE_URL = process.env.APERTUS_BASE_URL ?? "https://api.publicai.co/v1";
 const APERTUS_MODEL = process.env.APERTUS_MODEL ?? "swiss-ai/apertus-70b-instruct";
+
+// Gemini — Google Generative Language API (AI Studio key). Cheap/fast flash-lite tier.
+const GEMINI_BASE_URL = process.env.GEMINI_BASE_URL ?? "https://generativelanguage.googleapis.com/v1beta";
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash-lite";
 
 export const costLog: CostLogEntry[] = [];
 
@@ -34,12 +40,13 @@ function getClient(): Anthropic | null {
   return client;
 }
 
-export type LLMMode = "ollama" | "anthropic" | "apertus" | "stub";
+export type LLMMode = "ollama" | "anthropic" | "apertus" | "gemini" | "stub";
 
 // Default (auto) mode: ollama if a local model is set, else anthropic, else stub.
 export function llmMode(): LLMMode {
   if (OLLAMA_MODEL) return "ollama";
   if (process.env.ANTHROPIC_API_KEY) return "anthropic";
+  if (process.env.GEMINI_API_KEY) return "gemini";
   if (process.env.APERTUS_API_KEY) return "apertus"; // Swiss sovereign LLM as default reasoning
   return "stub";
 }
@@ -51,6 +58,7 @@ export function llmMode(): LLMMode {
 export function stageMode(stage: 2 | 3): LLMMode {
   const override = (stage === 2 ? process.env.STAGE2_PROVIDER : process.env.STAGE3_PROVIDER)?.toLowerCase();
   if (override === "anthropic" && process.env.ANTHROPIC_API_KEY) return "anthropic";
+  if (override === "gemini" && process.env.GEMINI_API_KEY) return "gemini";
   if (override === "apertus" && process.env.APERTUS_API_KEY) return "apertus";
   if (override === "ollama" && OLLAMA_MODEL) return "ollama";
   if (override === "stub") return "stub";
@@ -112,6 +120,60 @@ async function callApertus(system: string, user: string, maxTokens: number) {
   };
 }
 
+const GEMINI_MAX_RETRIES = Number(process.env.GEMINI_MAX_RETRIES ?? 5);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function callGeminiOnce(system: string, user: string, maxTokens: number) {
+  const res = await fetch(`${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`, {
+    method: "POST",
+    headers: { "x-goog-api-key": process.env.GEMINI_API_KEY!, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: user }] }],
+      generationConfig: { maxOutputTokens: maxTokens, responseMimeType: "application/json" },
+    }),
+  });
+  if (res.status === 429 || res.status >= 500) {
+    // retryable: rate limit or transient server error. Honor server retry hint if present.
+    const body = await res.text();
+    const hint = Number(body.match(/retry in ([0-9.]+)s/i)?.[1]);
+    const err = new Error(`Gemini ${res.status}: ${body.slice(0, 120)}`) as Error & { retryMs?: number };
+    err.retryMs = Number.isFinite(hint) ? Math.ceil(hint * 1000) : undefined;
+    throw err;
+  }
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+  };
+  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  if (!text) throw new Error(`Gemini returned no text: ${JSON.stringify(data).slice(0, 200)}`);
+  return {
+    text,
+    model: GEMINI_MODEL,
+    inputTokens: data.usageMetadata?.promptTokenCount ?? 0,
+    outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+  };
+}
+
+// Retry transient failures (network "fetch failed", 429 rate limit, 5xx) with backoff so a
+// one-shot generation run completes cleanly instead of falling back to the stub.
+async function callGemini(system: string, user: string, maxTokens: number) {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt++) {
+    try {
+      return await callGeminiOnce(system, user, maxTokens);
+    } catch (e) {
+      lastErr = e;
+      if (attempt === GEMINI_MAX_RETRIES) break;
+      const hinted = (e as { retryMs?: number }).retryMs;
+      const backoff = hinted ?? Math.min(1000 * 2 ** attempt, 8000);
+      await sleep(backoff + Math.floor(Math.random() * 250));
+    }
+  }
+  throw lastErr;
+}
+
 async function callOllama(model: string, system: string, user: string, maxTokens: number) {
   const res = await fetch(OLLAMA_URL, {
     method: "POST",
@@ -152,7 +214,9 @@ export async function callLLM(opts: {
           ? await callOllama(OLLAMA_MODEL!, opts.system, opts.user, opts.maxTokens)
           : mode === "apertus"
             ? await callApertus(opts.system, opts.user, opts.maxTokens)
-            : await callAnthropic(opts.model, opts.system, opts.user, opts.maxTokens);
+            : mode === "gemini"
+              ? await callGemini(opts.system, opts.user, opts.maxTokens)
+              : await callAnthropic(opts.model, opts.system, opts.user, opts.maxTokens);
       logCost(opts.stage, r.model, r.inputTokens, r.outputTokens, opts.signalId);
       return { text: r.text, live: true };
     } catch (e) {
@@ -163,7 +227,13 @@ export async function callLLM(opts: {
   const text = opts.stub();
   logCost(
     opts.stage,
-    mode === "ollama" ? (OLLAMA_MODEL ?? "ollama") : mode === "apertus" ? APERTUS_MODEL : opts.model,
+    mode === "ollama"
+      ? (OLLAMA_MODEL ?? "ollama")
+      : mode === "apertus"
+        ? APERTUS_MODEL
+        : mode === "gemini"
+          ? GEMINI_MODEL
+          : opts.model,
     Math.ceil((opts.system.length + opts.user.length) / 4),
     Math.ceil(text.length / 4),
     opts.signalId,

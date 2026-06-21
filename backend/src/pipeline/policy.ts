@@ -12,6 +12,7 @@ export interface RiskPolicy {
   approvedBy: string;
   flagBands: { mediumFrom: number; highFrom: number };
   softeningFactor: number;
+  aggregation: { duplicateDiscount: number; neutralFactor: number };
   signalWeights: Record<SignalCategory, number>;
   transactionRules: {
     windowDays: number;

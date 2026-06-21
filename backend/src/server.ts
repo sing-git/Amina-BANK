@@ -11,6 +11,7 @@ import { loadDriftSignals } from "./ingest/newsAdapter.js";
 import { loadTransactions } from "./ingest/txAdapter.js";
 import { loadContagionFlags, contagionFlagToScore } from "./ingest/sanctionsFlagsAdapter.js";
 import { loadRegistryDriftScores } from "./ingest/corporateAdapter.js";
+import { loadSentimentScores } from "./ingest/sentimentAdapter.js";
 import { loadAllBaselines, loadAllSignals, pingDb } from "./db.js";
 import type { ClientBaseline, RawSignal, TransactionRecord } from "./types.js";
 
@@ -64,8 +65,16 @@ app.get("/api/demo/alerts", async (_req, res) => {
 
 // Real portfolio: team KYC db (data/kyc_database.json) + Giulio's news drift signals,
 // each scored through the pipeline. This is the integrated end-to-end view.
-app.get("/api/portfolio/alerts", async (_req, res) => {
+app.get("/api/portfolio/alerts", async (req, res) => {
   try {
+    // Cache-first: serve the pre-generated portfolio (data/portfolio_alerts.json) so the LLM key
+    // is never needed at runtime. `npm run gen:portfolio` (with a key) refreshes it.
+    // Pass ?fresh=1 to bypass the cache and score live.
+    const cachePath = new URL("../../data/portfolio_alerts.json", import.meta.url);
+    if (!req.query.fresh && existsSync(cachePath)) {
+      return res.json(JSON.parse(readFileSync(cachePath, "utf8")));
+    }
+
     // Prefer Postgres (the scrapers→DB→API loop); fall back to reading the JSON files directly.
     let baselines;
     let signalsByClient;
@@ -87,6 +96,7 @@ app.get("/api/portfolio/alerts", async (_req, res) => {
     const txByClient = loadTransactions();
     const contagionByClient = loadContagionFlags(baselines);
     const registryByClient = loadRegistryDriftScores(baselines);
+    const sentimentByClient = loadSentimentScores(baselines); // Stage-1 free semantic (Giulio)
 
     // Score all clients concurrently — each runPipeline is independent, so wall-clock is the
     // slowest single client rather than the sum (matters with a live LLM).
@@ -110,7 +120,8 @@ app.get("/api/portfolio/alerts", async (_req, res) => {
           : signals;
         const contagion = (contagionByClient[baseline.clientId] ?? []).map((c, i) => contagionFlagToScore(c, i));
         const registry = registryByClient[baseline.clientId] ?? [];
-        const result = await runPipeline(baseline, txs, withTx, [...contagion, ...registry]);
+        const sentiment = sentimentByClient[baseline.clientId] ?? [];
+        const result = await runPipeline(baseline, txs, withTx, [...contagion, ...registry, ...sentiment]);
         return { caseName: baseline.legalName, baseline, ...result };
       }),
     );

@@ -505,6 +505,24 @@ Stage 3, cost table last.
 ## 16. Progress & roadmap / 진행·로드맵 (2026-06-20)
 
 **Latest changes & solutions / 최근 변경·해결 (this session):**
+- **News sentiment wired as a free Stage-1 signal (`sentimentAdapter.ts`).** Giulio's pipeline
+  has TWO separate free tools — **Gemma3:4b screens which articles to keep** (Ollama), then
+  **VADER scores sentiment** (`sentiment_enrich.py`, `method: "vader+finance-lexicon"`, NOT an
+  LLM). We read the company-level `sentiment_score` (`score`, `risk_polarity`, `adverse_ratio`)
+  and emit a deterministic pre-scored signal — no model on our side: net-negative/high-polarity →
+  `negative_sentiment` risk signal (Terraform 0.86 → magnitude 86); net-positive → a `positive`
+  softener (bounded by `softeningFactor`, never cancels the hard gate); neutral → nothing. Feeds
+  the composite alongside registry + contagion. **Sentiment ≠ Gemma:** Gemma filters news, VADER
+  scores it, our backend just reads VADER's numbers. (Gemma only enters our side if Stage 2/3 use
+  Ollama.) **Positive-flag policy (EN):** positive news only *discounts* the score (≤30% softening);
+  it can never cancel a sanctions/PEP hard gate — good PR can't hide a real red flag.
+- **`.gitignore` footgun fixed (unanchored patterns).** `data/` and `pipeline/` (no leading
+  slash) matched those folder names at EVERY level, so they silently ignored `frontend/src/data/`,
+  `backend/src/data/` and `backend/src/pipeline/` — files looked committed but never left the
+  author's machine. Symptom: vite build failed with `Failed to resolve "./data/kyc_sanctions_flags.json"`.
+  Fix: root-anchor → `/data/`, `/pipeline/`; restored the 3 missing `frontend/src/data/*.json`
+  bundled fallbacks from their real sources. **Lesson:** in `.gitignore`, write `/folder/` (leading
+  slash) for a specific root folder; without it the name is ignored everywhere, source code included.
 - **End-to-end pipeline proof (`npm run health`).** A single check (`src/pipelineHealth.ts`)
   traces every link — source files → Postgres → Layer-2 txs → pipeline scoring → REST API →
   frontend — and prints PASS/FAIL. Latest run: **18 passed, 0 failed → PIPELINE HEALTHY** (10/10

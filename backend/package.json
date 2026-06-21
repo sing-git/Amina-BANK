@@ -18,6 +18,8 @@
     "scheduler": "tsx src/scheduler.ts",
     "demo:ingest": "tsx src/demoIngest.ts",
     "gen:tx": "tsx src/data/generators/genTransactions.ts",
+    "smoke": "tsx src/smokeTest.ts",
+    "gen:portfolio": "tsx src/genPortfolio.ts",
     "health": "tsx src/pipelineHealth.ts"
   },
   "dependencies": {
