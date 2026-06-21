@@ -65,8 +65,16 @@ app.get("/api/demo/alerts", async (_req, res) => {
 
 // Real portfolio: team KYC db (data/kyc_database.json) + Giulio's news drift signals,
 // each scored through the pipeline. This is the integrated end-to-end view.
-app.get("/api/portfolio/alerts", async (_req, res) => {
+app.get("/api/portfolio/alerts", async (req, res) => {
   try {
+    // Cache-first: serve the pre-generated portfolio (data/portfolio_alerts.json) so the LLM key
+    // is never needed at runtime. `npm run gen:portfolio` (with a key) refreshes it.
+    // Pass ?fresh=1 to bypass the cache and score live.
+    const cachePath = new URL("../../data/portfolio_alerts.json", import.meta.url);
+    if (!req.query.fresh && existsSync(cachePath)) {
+      return res.json(JSON.parse(readFileSync(cachePath, "utf8")));
+    }
+
     // Prefer Postgres (the scrapers→DB→API loop); fall back to reading the JSON files directly.
     let baselines;
     let signalsByClient;

@@ -13,6 +13,30 @@ import { flagForScore, MAX_WEIGHT, POLICY } from "./policy.js";
 export const SIGNAL_WEIGHTS = POLICY.signalWeights;
 export const WEIGHTS_VERSION = POLICY.version;
 
+// Sum contributions with diminishing returns inside each category:
+//   categoryTotal = max(contribs) + duplicateDiscount × Σ(the rest)
+// so a strong signal counts fully, while repeats of the same drift dimension add only
+// a discounted tail. The overall score is the sum of per-category totals.
+function aggregateByCategory(
+  signals: SignalScore[],
+  contribution: (s: SignalScore) => number,
+  duplicateDiscount: number,
+): number {
+  const byCategory = new Map<string, number[]>();
+  for (const s of signals) {
+    const arr = byCategory.get(s.category) ?? [];
+    arr.push(contribution(s));
+    byCategory.set(s.category, arr);
+  }
+  let total = 0;
+  for (const contribs of byCategory.values()) {
+    contribs.sort((a, b) => b - a);
+    const [top = 0, ...rest] = contribs;
+    total += top + duplicateDiscount * rest.reduce((acc, c) => acc + c, 0);
+  }
+  return total;
+}
+
 export function computeCompositeScore(
   scores: SignalScore[],
   hardGateResult: HardGateResult,
@@ -35,15 +59,19 @@ export function computeCompositeScore(
   const positiveSignals = scores.filter((s) => s.direction === "positive");
   const neutralSignals = scores.filter((s) => s.direction === "neutral_update");
 
-  const riskSum = riskSignals.reduce(
-    (acc, s) => acc + (s.magnitude * ((SIGNAL_WEIGHTS[s.category] ?? 0) / MAX_WEIGHT) * s.confidence),
-    0,
-  );
-  const softening = positiveSignals.reduce(
-    (acc, s) =>
-      acc + s.magnitude * ((SIGNAL_WEIGHTS[s.category] ?? 0) / MAX_WEIGHT) * s.confidence * POLICY.softeningFactor,
-    0,
-  );
+  // Per-signal contribution: magnitude × (relative weight) × confidence.
+  const contribution = (s: SignalScore) =>
+    s.magnitude * ((SIGNAL_WEIGHTS[s.category] ?? 0) / MAX_WEIGHT) * s.confidence;
+
+  // Diminishing returns WITHIN a category: ten articles about the same pivot must not
+  // score ten times a single one. A client's "negative_news" risk is driven by the
+  // strongest item; repeats add only a discounted tail. This de-correlates the score
+  // from raw news volume (big public companies have more articles, not more risk).
+  // duplicateDiscount is compliance-owned policy (riskPolicy.aggregation).
+  const riskSum = aggregateByCategory(riskSignals, contribution, POLICY.aggregation.duplicateDiscount);
+  const softening =
+    aggregateByCategory(positiveSignals, contribution, POLICY.aggregation.duplicateDiscount) *
+    POLICY.softeningFactor;
 
   const compositeScore = Math.max(0, Math.min(100, riskSum - softening));
 

@@ -7,10 +7,15 @@
   "flagBands": {
     "_doc": "compositeScore (0-100) → riskFlag. < mediumFrom = low; < highFrom = medium; else high.",
     "mediumFrom": 30,
-    "highFrom": 60
+    "highFrom": 55
   },
 
   "softeningFactor": 0.3,
+
+  "aggregation": {
+    "_doc": "repeated signals in the same category have diminishing returns: category contribution = maxContribution + duplicateDiscount × sum(rest). Keeps the score driven by distinct red flags, not raw news volume.",
+    "duplicateDiscount": 0.25
+  },
 
   "signalWeights": {
     "_doc": "relative importance per signal category; scaled by weight/maxWeight in the score.",
@@ -49,9 +54,9 @@
   },
 
   "embeddingGate": {
-    "_doc": "a narrative signal escalates to Stage 2 if baselineSim < baselineSimMax OR maxArchetypeSim > archetypeSimMin. NOTE: these thresholds are calibrated for simpleEmbed. With EMBED_BACKEND=transformers (real sentence-transformers) similarity runs on a lower scale — recalibrate, e.g. baselineSimMax≈0.45, archetypeSimMin≈0.35.",
-    "baselineSimMax": 0.6,
-    "archetypeSimMin": 0.55
+    "_doc": "a narrative signal escalates to Stage 2 if baselineSim < baselineSimMax OR maxArchetypeSim > archetypeSimMin. Tightened for simpleEmbed: most news sits at baselineSim~0.26 / archSim~0.29, so the old 0.6/0.55 escalated everything. 0.25/0.40 escalates only genuinely divergent or strongly archetype-matching news. With EMBED_BACKEND=transformers, re-measure and recalibrate.",
+    "baselineSimMax": 0.25,
+    "archetypeSimMin": 0.4
   },
 
   "signalFilter": {

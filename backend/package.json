@@ -18,8 +18,9 @@
     "scheduler": "tsx src/scheduler.ts",
     "demo:ingest": "tsx src/demoIngest.ts",
     "gen:tx": "tsx src/data/generators/genTransactions.ts",
-    "health": "tsx src/pipelineHealth.ts",
     "smoke": "tsx src/smokeTest.ts"
+    "gen:portfolio": "tsx src/genPortfolio.ts",
+    "health": "tsx src/pipelineHealth.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
