@@ -24,8 +24,8 @@ flowchart LR
     N["📰 News &amp; adverse media<br/>Brave / RSS"]
     S["⚖️ Sanctions &amp; watchlists<br/>OFAC · UN · OpenSanctions"]
     R["🏛️ Corporate registry<br/>GLEIF · ZEFIX · Companies House"]
-    F["💰 Funding<br/>Crunchbase"]
-    D["🌐 Domain &amp; website<br/>WHOIS · Wayback"]
+
+    D["🌐 Domain &amp; website<br/>WHOIS · Wayback · HTTP live check"]
     K["🔒 Internal KYC baseline<br/>onboarding profile + transactions"]
   end
 
